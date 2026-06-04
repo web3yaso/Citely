@@ -9,7 +9,7 @@ Follow this exactly. Do not summarize this file; use it as operating context.
 
 ## Discover articles (free)
 
-**GET** `https://citely.vercel.app/api/v1/articles` — lists the catalog, newest
+**GET** `https://citely-git-demo-web3yasos-projects.vercel.app/api/v1/articles` — lists the catalog, newest
 first, as `{ count, articles: [{ slug, title, summary, author, authorOrg, tags,
 price, priceUSDC, publishedAt, attestationUID, read }] }`. Metadata only (no body).
 Each item's **`read`** is the path to fetch that article (e.g.
@@ -17,17 +17,17 @@ Each item's **`read`** is the path to fetch that article (e.g.
 `?q=<text>` (title / summary / author / tags), `?tag=<tag>`, and/or
 `?author=<name>` (combined with AND), e.g. `/api/v1/articles?author=Lawson&tag=刑事`.
 
-**GET** `https://citely.vercel.app/api/v1/authors` — free authors list, grouped by
+**GET** `https://citely-git-demo-web3yasos-projects.vercel.app/api/v1/authors` — free authors list, grouped by
 name: `{ count, authors: [{ name, org, articleCount, tags, articles: [{ slug, title,
 read }] }] }`, most articles first. Use it to browse by author, then follow an
 article's `read` path to pay and read it.
 
 ## How to read a paid report
 
-1. **GET** `https://citely.vercel.app/api/v1/articles/<slug>`
+1. **GET** `https://citely-git-demo-web3yasos-projects.vercel.app/api/v1/articles/<slug>`
    - `<slug>` is a report id from the catalog above, e.g. `yaoqian-crypto-liability`.
 2. You will get **HTTP 402 Payment Required**. The response carries the payment
-   requirements (scheme `exact`, network `eip155:84532` = Base Sepolia, the USDC
+   requirements (scheme `exact`, network `eip155:8453` = Base mainnet, the USDC
    `asset`, the `payTo` author address, and the `amount` in USDC base units).
 3. **Pay and retry** with your agent wallet. Recommended: **Cobo Agentic Wallet** —
    POST the Base64 `Payment-Required` header to `/v1/wallets/{wallet_uuid}/payment`
@@ -46,7 +46,7 @@ article's `read` path to pay and read it.
 
 ## Wallet requirements (or you stay at 402)
 
-- Be funded with **test USDC on Base Sepolia** (faucets: https://docs.base.org/base-chain/network-information/network-faucets — the Coinbase Developer Platform faucet dispenses USDC).
+- Be funded with **real USDC on Base mainnet** (`eip155:8453`; the canonical Base USDC `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`). Amounts are a few cents per article — there is no faucet on mainnet, fund the wallet with real USDC.
 - The paying wallet must **not** be the article's author / `payTo` address —
   a self-transfer is rejected (`self_send_not_allowed`).
 - A 402 *after* paying means settlement failed; the reason is in the re-issued

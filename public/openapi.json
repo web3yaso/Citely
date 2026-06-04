@@ -3,10 +3,10 @@
   "info": {
     "title": "Citely API",
     "version": "1.0.0",
-    "description": "Discover and read expert Web3 legal / compliance / security risk reports. Listing is free; full text is behind an x402 paywall (USDC on Base Sepolia). See /SKILL.md for the agent reading flow.",
+    "description": "Discover and read expert Web3 legal / compliance / security risk reports. Listing is free; full text is behind an x402 paywall (USDC on Base mainnet). See /SKILL.md for the agent reading flow.",
     "license": { "name": "Authors keep 100% — 0% platform fee" }
   },
-  "servers": [{ "url": "https://citely.vercel.app", "description": "Base Sepolia testnet deployment" }],
+  "servers": [{ "url": "https://citely-git-demo-web3yasos-projects.vercel.app", "description": "Base mainnet (demo deployment)" }],
   "paths": {
     "/api/v1/articles": {
       "get": {
@@ -65,7 +65,7 @@
       "get": {
         "operationId": "readArticle",
         "summary": "Read a report (x402 paid)",
-        "description": "First call returns 402 with payment requirements in the `payment-required` header (Base64 JSON: scheme exact, network eip155:84532, USDC asset, payTo, amount). Pay with an agent wallet (e.g. Cobo Agentic Wallet, protocol x402) and retry to get 200. The paying wallet must hold test USDC and must NOT be the article's author/payTo (self-send is rejected).",
+        "description": "First call returns 402 with payment requirements in the `payment-required` header (Base64 JSON: scheme exact, network eip155:8453 = Base mainnet, USDC asset, payTo, amount). Pay with an agent wallet (e.g. Cobo Agentic Wallet, protocol x402) and retry to get 200. The paying wallet must hold real USDC and must NOT be the article's author/payTo (self-send is rejected).",
         "parameters": [
           { "name": "slug", "in": "path", "required": true, "schema": { "type": "string", "pattern": "^[a-z0-9-]{1,80}$" }, "example": "yaoqian-crypto-liability" }
         ],

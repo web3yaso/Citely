@@ -3,11 +3,17 @@ import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { createFacilitatorConfig } from "@coinbase/x402";
 import { findRecord } from "./attestation-index";
 
-export const X402_NETWORK = "eip155:84532";
+// ⚠️ DEMO BRANCH ONLY — Base mainnet (real USDC). dev/main stay on Base Sepolia
+// (eip155:84532). Switched to mainnet because Cobo Agentic Wallet's x402 settlement
+// has no testnet support (see issue #3). EAS provenance still reads Base Sepolia via
+// BASE_SEPOLIA_RPC_URL — unaffected. Keep the X402_NETWORK env var UNSET on the demo
+// deployment so this constant is authoritative.
+export const X402_NETWORK = "eip155:8453";
 
-if (process.env.X402_NETWORK && process.env.X402_NETWORK !== X402_NETWORK) {
-  throw new Error(`X402_NETWORK must be ${X402_NETWORK}, got ${process.env.X402_NETWORK}`);
-}
+// No env cross-check on the demo branch: this constant is the single source of truth
+// for the paywall network. The X402_NETWORK env var has no effect on payment routing
+// (only this file's constant does), so a leftover eip155:84532 in a shared .env.local
+// must not break the mainnet demo build.
 
 let _server: x402ResourceServer | null = null;
 export function getX402Server(): x402ResourceServer {

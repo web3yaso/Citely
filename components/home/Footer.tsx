@@ -5,6 +5,7 @@ export function Footer() {
         <div className="foot-l">
           <a href="/">home</a>
           <a href="/reports">reports</a>
+          <a href="/how-it-works">how it works</a>
           <a href="/openapi.json" target="_blank" rel="noreferrer">openapi</a>
           <a href="/SKILL.md" target="_blank" rel="noreferrer">skill</a>
           <a href="/llms.txt" target="_blank" rel="noreferrer">llms</a>

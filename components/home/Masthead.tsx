@@ -37,6 +37,7 @@ export function Masthead() {
           <div className="menu-eyebrow">Citely</div>
           <Link href="/publish"><span className="mtxt"><span className="mt">发布报告</span><span className="msub">签名上链你的文章</span></span><span className="ar">→</span></Link>
           <Link href="/reports"><span className="mtxt"><span className="mt">报告目录</span><span className="msub">链上可验证内容库</span></span><span className="ar">→</span></Link>
+          <Link href="/how-it-works"><span className="mtxt"><span className="mt">How it works</span><span className="msub">三方付费闭环</span></span><span className="ar">→</span></Link>
         </nav>
       </div>
     </header>

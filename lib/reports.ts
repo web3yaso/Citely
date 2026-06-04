@@ -138,6 +138,40 @@ export function listAgentCatalog(filters: CatalogFilters = {}): CatalogItem[] {
   return items;
 }
 
+/** Public, agent-facing author summary derived from the published catalog. Grouped
+ *  by author name (not on-chain address, per the leaderboard convention) — never the
+ *  body, never the payout address. */
+export type AuthorSummary = {
+  name: string;
+  org?: string;
+  articleCount: number;
+  tags: string[]; // deduped union of tags across this author's published articles
+  articles: { slug: string; title: string; read: string }[];
+};
+
+/** The agent-facing authors list (GET /api/v1/authors): every author with at least
+ *  one published article, grouped by name, most articles first then name. Derived from
+ *  the same published catalog as /api/v1/articles, so it stays in sync. */
+export function listAuthors(): AuthorSummary[] {
+  const byName = new Map<string, AuthorSummary>();
+  for (const item of listAgentCatalog()) {
+    const cur = byName.get(item.author) ?? {
+      name: item.author,
+      org: item.authorOrg,
+      articleCount: 0,
+      tags: [],
+      articles: [],
+    };
+    cur.articleCount += 1;
+    cur.articles.push({ slug: item.slug, title: item.title, read: item.read });
+    for (const t of item.tags) if (!cur.tags.includes(t)) cur.tags.push(t);
+    byName.set(item.author, cur);
+  }
+  return [...byName.values()].sort(
+    (a, b) => b.articleCount - a.articleCount || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
+  );
+}
+
 /** A single published report, or null if the slug is not published (not in the index). */
 export function getPublishedReport(slug: string): PublishedReport | null {
   const rec = readIndex().find((r) => r.slug === slug);

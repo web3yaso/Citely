@@ -37,6 +37,30 @@
         }
       }
     },
+    "/api/v1/authors": {
+      "get": {
+        "operationId": "listAuthors",
+        "summary": "List authors (free, derived from the attestation index)",
+        "description": "Returns the published authors, grouped by name (most articles first). Derived from the same on-chain attestation index as /api/v1/articles, so it stays in sync. Never exposes the article body or the on-chain payout address.",
+        "responses": {
+          "200": {
+            "description": "Authors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["count", "authors"],
+                  "properties": {
+                    "count": { "type": "integer" },
+                    "authors": { "type": "array", "items": { "$ref": "#/components/schemas/AuthorSummary" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/articles/{slug}": {
       "get": {
         "operationId": "readArticle",
@@ -85,6 +109,28 @@
           "publishedAt": { "type": "string" },
           "attestationUID": { "type": "string", "description": "EAS attestation UID.", "example": "0x…" },
           "read": { "type": "string", "description": "Path to fetch this article (prepend the origin and GET it).", "example": "/api/v1/articles/yaoqian-crypto-liability" }
+        }
+      },
+      "AuthorSummary": {
+        "type": "object",
+        "required": ["name", "articleCount", "tags", "articles"],
+        "properties": {
+          "name": { "type": "string" },
+          "org": { "type": "string" },
+          "articleCount": { "type": "integer" },
+          "tags": { "type": "array", "items": { "type": "string" }, "description": "Deduped union of tags across this author's articles." },
+          "articles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["slug", "title", "read"],
+              "properties": {
+                "slug": { "type": "string" },
+                "title": { "type": "string" },
+                "read": { "type": "string", "description": "Path to fetch this article (prepend the origin and GET it).", "example": "/api/v1/articles/yaoqian-crypto-liability" }
+              }
+            }
+          }
         }
       },
       "ArticlePaid": {

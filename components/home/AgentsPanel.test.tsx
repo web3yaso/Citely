@@ -13,6 +13,11 @@ describe("AgentsPanel", () => {
     expect(screen.getAllByRole("button", { name: /copy/i })).toHaveLength(3);
   });
 
+  it("lists the free authors discovery endpoint alongside the article endpoints", () => {
+    render(<AgentsPanel />);
+    expect(screen.getByText("/api/v1/authors")).toBeInTheDocument();
+  });
+
   it("defaults to Cobo and switches the setup prompt when another provider is picked", async () => {
     const user = userEvent.setup();
     render(<AgentsPanel />);

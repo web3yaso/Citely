@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getReportMeta, getReportBody, listReportSlugs, listPublishedReports, getPublishedReport, listReaderCatalog, listAgentCatalog, toCatalogItem, catalogMatches } from "./reports";
+import { getReportMeta, getReportBody, listReportSlugs, listPublishedReports, getPublishedReport, listReaderCatalog, listAgentCatalog, toCatalogItem, catalogMatches, listAuthors } from "./reports";
 
 describe("reports loader", () => {
   it("reads frontmatter meta for the seed", () => {
@@ -96,5 +96,38 @@ describe("agent catalog (GET /api/v1/articles)", () => {
     const item = toCatalogItem(listReaderCatalog()[0]);
     expect(catalogMatches(item, item.author.toUpperCase())).toBe(true);
     expect(catalogMatches(item, "definitely-not-present")).toBe(false);
+  });
+});
+
+describe("authors list (GET /api/v1/authors)", () => {
+  it("derives authors grouped by name, with org, count, tag-union and article pointers", () => {
+    // Lawson Riskman is the stable seed author (2 always-published articles).
+    const lawson = listAuthors().find((a) => a.name === "Lawson Riskman");
+    expect(lawson).toBeTruthy();
+    expect(lawson!.org).toBe("Web3风险官");
+    expect(lawson!.articleCount).toBe(2);
+    // tags are a deduped union across the author's articles
+    expect(new Set(lawson!.tags).size).toBe(lawson!.tags.length);
+    expect(lawson!.tags.length).toBeGreaterThan(0);
+    // article pointers carry slug, title and the paid read path — never the body
+    const slugs = lawson!.articles.map((x) => x.slug).sort();
+    expect(slugs).toEqual(["web3-illegal-employment", "yaoqian-crypto-liability"]);
+    expect(lawson!.articles[0].read).toBe(`/api/v1/articles/${lawson!.articles[0].slug}`);
+    expect(lawson!.articles[0].title.length).toBeGreaterThan(0);
+  });
+
+  it("never exposes article bodies or on-chain author addresses", () => {
+    for (const a of listAuthors()) {
+      expect(a as Record<string, unknown>).not.toHaveProperty("content");
+      expect(a as Record<string, unknown>).not.toHaveProperty("address");
+      for (const art of a.articles) {
+        expect(art as Record<string, unknown>).not.toHaveProperty("content");
+      }
+    }
+  });
+
+  it("article counts across authors sum to the full published catalog", () => {
+    const fromAuthors = listAuthors().reduce((n, a) => n + a.articleCount, 0);
+    expect(fromAuthors).toBe(listAgentCatalog().length);
   });
 });

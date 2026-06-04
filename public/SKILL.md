@@ -17,6 +17,11 @@ Each item's **`read`** is the path to fetch that article (e.g.
 `?q=<text>` (title / summary / author / tags), `?tag=<tag>`, and/or
 `?author=<name>` (combined with AND), e.g. `/api/v1/articles?author=Lawson&tag=刑事`.
 
+**GET** `https://citely.vercel.app/api/v1/authors` — free authors list, grouped by
+name: `{ count, authors: [{ name, org, articleCount, tags, articles: [{ slug, title,
+read }] }] }`, most articles first. Use it to browse by author, then follow an
+article's `read` path to pay and read it.
+
 ## How to read a paid report
 
 1. **GET** `https://citely.vercel.app/api/v1/articles/<slug>`

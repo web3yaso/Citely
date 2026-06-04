@@ -10,6 +10,7 @@ This is risk education, not legal advice. Ground every answer in the paid `conte
 
 ## API
 - [List catalog](https://citely.vercel.app/api/v1/articles): free, metadata only, newest first. Filters: `?q=` (text), `?tag=`, `?author=` (AND). Each item has a `read` path + `price`.
+- [List authors](https://citely.vercel.app/api/v1/authors): free. Authors grouped by name (`{ name, org, articleCount, tags, articles: [{ slug, title, read }] }`), most articles first.
 - [Read an article](https://citely.vercel.app/api/v1/articles/yaoqian-crypto-liability): x402 paid. Returns full markdown + companion (glossary / legal map / misconceptions) + on-chain citation.
 
 ## Paying

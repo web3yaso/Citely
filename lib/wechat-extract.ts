@@ -3,3 +3,10 @@ export function normalizeDate(s: string): string {
   if (!m) return "";
   return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
 }
+
+export function rewriteImageSrcs(markdown: string, mapping: Record<string, string>): string {
+  return markdown.replace(
+    /(!\[[^\]]*\]\()([^)\s]+)/g,
+    (full, pre, url) => (mapping[url] ? pre + mapping[url] : full),
+  );
+}

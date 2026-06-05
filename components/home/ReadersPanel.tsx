@@ -25,7 +25,7 @@ export function ReadersPanel({ articles }: { articles: PublishedReport[] }) {
     <section className="panel active" id="panel-readers">
       <h1 className="display">你的问题,<em>已经有人写过答案</em>。</h1>
       <p className="sub">搜索你的处境,付费阅读实名作者写的对应文章,即得答案。</p>
-      <p className="powered">Powered by MPP on Tempo and x402 on Base</p>
+      <p className="powered">Powered by x402 on Base</p>
 
       <div className="big-input">
         <input
@@ -65,7 +65,7 @@ export function ReadersPanel({ articles }: { articles: PublishedReport[] }) {
       </div>
 
       <div className="sec-actions">
-        找不到对应文章? <Link href="/reports">浏览全部收录</Link> · <a href="#">订阅 $19/月 畅读所有作者</a>
+        找不到对应文章? <Link href="/reports">浏览全部收录</Link>
       </div>
     </section>
   );

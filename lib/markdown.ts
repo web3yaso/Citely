@@ -48,8 +48,9 @@ function squash(s: string): string {
 }
 
 export function normalizeMarkdown(md: string, opts: { title?: string } = {}): string {
-  // 0) drop images (broken WeChat hotlinks)
-  let out = md.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
+  // 0) drop only remote/broken image hotlinks (http(s)/data:); keep rehosted
+  //    local images (/reports/…) so figures render on the page
+  let out = md.replace(/!\[[^\]]*\]\(\s*(?:https?:|data:)[^)]*\)/g, "");
   // 1) tighten spaced bold globally, even across a wrapped line break
   out = out.replace(/\*\*[ \t\n]*([^*]+?)[ \t\n]*\*\*/g, "**$1**");
   // 2) per line: drop platform cruft; promote a standalone bold line to a heading

@@ -24,9 +24,13 @@ describe("normalizeMarkdown", () => {
     expect(normalizeMarkdown("普通段落,没有强调。")).toBe("普通段落,没有强调。");
   });
 
-  it("strips broken/hotlinked images", () => {
+  it("strips remote/hotlinked images but keeps rehosted local ones", () => {
+    // remote hotlinks (http/https) and data: placeholders are still dropped
     expect(normalizeMarkdown("![cover](https://mmbiz.qpic.cn/x.jpg)\n\n正文在此")).toBe("正文在此");
     expect(normalizeMarkdown("行内 ![](http://x/y.png) 图")).not.toContain("![");
+    expect(normalizeMarkdown("![](data:image/svg+xml,abc)\n\n正文")).toBe("正文");
+    // rehosted local images (/reports/…) survive so they render on the page
+    expect(normalizeMarkdown("![图片](/reports/foo/img-1.png)")).toBe("![图片](/reports/foo/img-1.png)");
   });
 
   it("strips WeChat platform boilerplate", () => {

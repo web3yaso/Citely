@@ -5,7 +5,7 @@ import { DPrompt } from "@/components/shared/DPrompt";
 
 // Agent wallets that can hold USDC on Base Sepolia and pay an x402 request.
 // Cobo Agentic Wallet is the default / featured solution: it natively signs x402
-// (and MPP) payments and supports Base Sepolia (Cobo chain TBASE_SETH).
+// payments and supports Base Sepolia (Cobo chain TBASE_SETH).
 const PROVIDERS = ["Cobo", "Coinbase", "AgentCash", "Circle"] as const;
 type Provider = (typeof PROVIDERS)[number];
 

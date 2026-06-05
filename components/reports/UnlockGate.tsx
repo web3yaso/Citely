@@ -14,12 +14,15 @@ export function UnlockGate({
   preview,
   renderFull,
   ctaClassName,
+  onUnlocked,
 }: {
   slug: string;
   priceUsd: string;
   preview: React.ReactNode;
   renderFull: (full: ArticlePaid) => React.ReactNode;
   ctaClassName?: string;
+  /** Fired once on payment success only — NOT on cache-restore. Human path passes the auto-download here. */
+  onUnlocked?: (full: ArticlePaid) => void;
 }) {
   const { isConnected, address, connector } = useAccount();
   const { connect } = useConnect();
@@ -56,6 +59,7 @@ export function UnlockGate({
       localStorage.setItem(cacheKey(slug), JSON.stringify(data));
       setFull(data);
       setStatus("idle");
+      onUnlocked?.(data);
     } catch (e) {
       setErr((e as Error).message ?? "unlock failed");
       setStatus("error");

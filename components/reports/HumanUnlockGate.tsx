@@ -1,6 +1,7 @@
 "use client";
 import { UnlockGate } from "./UnlockGate";
 import { FullArticle } from "./FullArticle";
+import { downloadArticleZip } from "@/lib/article-download";
 import type { ArticlePaid } from "@/lib/x402-client";
 
 export function HumanUnlockGate({
@@ -19,6 +20,7 @@ export function HumanUnlockGate({
       preview={preview}
       renderFull={(full: ArticlePaid) => <FullArticle full={full} />}
       ctaClassName="pw-cta"
+      onUnlocked={downloadArticleZip}
     />
   );
 }

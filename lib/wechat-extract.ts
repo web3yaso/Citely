@@ -69,8 +69,10 @@ export function extractArticle(html: string): ExtractedArticle {
   if (wechat) {
     CHROME_SELECTORS.forEach((sel) => wechat.querySelectorAll(sel).forEach((el) => el.remove()));
     wechat.querySelectorAll("img").forEach((img) => {
+      // WeChat sets src to a data:svg placeholder and the real URL to data-src,
+      // so always prefer data-src when present (not only when src is empty).
       const lazy = img.getAttribute("data-src");
-      if (lazy && !img.getAttribute("src")) img.setAttribute("src", lazy);
+      if (lazy) img.setAttribute("src", lazy);
     });
     contentHtml = wechat.innerHTML;
   } else {
@@ -78,8 +80,17 @@ export function extractArticle(html: string): ExtractedArticle {
     contentHtml = parsed?.content ?? doc.body.innerHTML;
   }
 
-  const markdown = toMarkdown(contentHtml);
-  const imageUrls = [...markdown.matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)].map((m) => m[1]);
+  const markdown = toMarkdown(contentHtml)
+    // drop inline data: placeholder images (gray svg stand-ins, no real content)
+    .replace(/!\[[^\]]*\]\(\s*<?data:[^)]*\)/g, "")
+    // unwrap angle-bracketed image URLs (Turndown wraps URLs with special chars)
+    .replace(/(!\[[^\]]*\]\()\s*<([^>]+)>(\))/g, "$1$2$3")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  // keep only real http(s) images (data: already stripped above)
+  const imageUrls = [...markdown.matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)]
+    .map((m) => m[1])
+    .filter((u) => /^https?:\/\//.test(u));
   return { title, authorOrg, publishedAt, markdown, imageUrls };
 }
 

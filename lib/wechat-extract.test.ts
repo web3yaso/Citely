@@ -44,10 +44,18 @@ describe("extractArticle", () => {
     expect(a.markdown).toMatch(/[-*] 列表项一/);
     expect(a.markdown).toContain("| 列 | 值 |");
   });
-  it("materializes data-src images and collects URLs in order", () => {
+  it("prefers data-src over a data: placeholder src, and excludes data: URIs", () => {
+    // pic_c has a real data-src but a data:svg placeholder src — must recover the real URL.
+    // The last <img> is a pure inline data: placeholder (no data-src) — must be excluded.
     expect(a.imageUrls).toEqual([
       "https://mmbiz.qpic.cn/pic_a.png",
       "https://mmbiz.qpic.cn/pic_b.jpg",
+      "https://mmbiz.qpic.cn/pic_c.png",
     ]);
+    expect(a.imageUrls.some((u) => u.startsWith("data:"))).toBe(false);
+  });
+  it("leaves no data: placeholder junk in the body and keeps real image links", () => {
+    expect(a.markdown).not.toContain("data:");
+    expect(a.markdown).toContain("![](https://mmbiz.qpic.cn/pic_c.png)");
   });
 });

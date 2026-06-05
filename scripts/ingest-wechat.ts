@@ -35,8 +35,12 @@ async function fetchRenderedHtml(target: string): Promise<string> {
 }
 
 function extFromUrl(u: string): string {
-  const e = extname(new URL(u).pathname).toLowerCase();
-  return /^\.(png|jpe?g|gif|webp)$/.test(e) ? e : ".png";
+  try {
+    const e = extname(new URL(u).pathname).toLowerCase();
+    return /^\.(png|jpe?g|gif|webp)$/.test(e) ? e : ".png";
+  } catch {
+    return ".png";
+  }
 }
 
 async function rehostImages(markdown: string, imageUrls: string[]): Promise<string> {

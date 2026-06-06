@@ -135,10 +135,15 @@ export function solPriceForSlug(slug: string): string {
 let _handler: X402PaymentHandler | null = null;
 export function getSolHandler(): X402PaymentHandler {
   if (!_handler) {
+    // X402ServerConfig (x402-solana v2): network/treasuryAddress/facilitatorUrl required;
+    // apiKeyId/apiKeySecret optional (PayAI JWT — bypasses free-tier limits); rpcUrl optional.
     _handler = new X402PaymentHandler({
       network: SOL_NETWORK,
       treasuryAddress: solPayTo(),
       facilitatorUrl: process.env.PAYAI_FACILITATOR_URL ?? "https://facilitator.payai.network",
+      apiKeyId: process.env.PAYAI_API_KEY_ID,
+      apiKeySecret: process.env.PAYAI_API_KEY_SECRET,
+      rpcUrl: process.env.SOLANA_DEVNET_RPC,
     });
   }
   return _handler;
@@ -303,7 +308,13 @@ export async function GET(
     );
   }
 
-  await x402.settlePayment(paymentHeader, requirements);
+  const settled = await x402.settlePayment(paymentHeader, requirements);
+  if (!settled.success) {
+    return NextResponse.json(
+      { error: "settlement failed", reason: settled.errorReason },
+      { status: 402, headers: CORS },
+    );
+  }
   return NextResponse.json(getPaidArticleBody(slug), { headers: CORS });
 }
 
@@ -350,7 +361,7 @@ Create `scripts/sol-x402-verify.ts`:
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { Keypair, Connection } from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import bs58 from "bs58";
 import { createX402Client } from "x402-solana/client";
 
@@ -372,9 +383,8 @@ const url = `${base}/api/v1/sol/articles/${slug}`;
 const secret = process.env.SOL_TEST_PAYER_SECRET;
 if (!secret) throw new Error("SOL_TEST_PAYER_SECRET not set (base58)");
 const kp = Keypair.fromSecretKey(bs58.decode(secret));
-const connection = new Connection(process.env.SOLANA_DEVNET_RPC ?? "https://api.devnet.solana.com", "confirmed");
 
-// Wrap the keypair as the wallet adapter createX402Client expects (signTransaction).
+// WalletAdapter (x402-solana v2): publicKey + signTransaction.
 const wallet = {
   publicKey: kp.publicKey,
   signTransaction: async (tx: any) => {
@@ -386,7 +396,12 @@ const wallet = {
 
 async function main() {
   console.log(`payer ${kp.publicKey.toBase58()} paying ${url} ...`);
-  const client = createX402Client({ wallet, connection });
+  // X402ClientConfig: { wallet, network, rpcUrl } — NOT a Connection object.
+  const client = createX402Client({
+    wallet,
+    network: "solana-devnet",
+    rpcUrl: process.env.SOLANA_DEVNET_RPC ?? "https://api.devnet.solana.com",
+  });
   const res = await client.fetch(url); // wrapped fetch: 402 → pay → retry → 200
   console.log("final status:", res.status);
   if (res.status !== 200) {

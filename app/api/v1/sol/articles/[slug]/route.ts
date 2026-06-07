@@ -39,7 +39,14 @@ export async function GET(
   const paymentHeader = x402.extractPayment(req.headers);
   if (!paymentHeader) {
     const r = x402.create402Response(requirements, resourceUrl);
-    return NextResponse.json(r.body, { status: r.status, headers: CORS });
+    // Advertise x402 v2 via the base64 PAYMENT-REQUIRED header. Without it the
+    // client downgrades to v1 (X-PAYMENT), which the v2 handler never reads —
+    // so the retry would look unpaid. (x402-solana negotiates protocol by this header.)
+    const headers = {
+      ...CORS,
+      "PAYMENT-REQUIRED": Buffer.from(JSON.stringify(r.body)).toString("base64"),
+    };
+    return NextResponse.json(r.body, { status: r.status, headers });
   }
 
   const verified = await x402.verifyPayment(paymentHeader, requirements);

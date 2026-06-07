@@ -52,6 +52,31 @@ article's `read` path to pay and read it.
 - A 402 *after* paying means settlement failed; the reason is in the re-issued
   `payment-required` header (insufficient balance / wrong network / self-send).
 
+## Pay on Solana devnet (parallel lane)
+
+There is a parallel lane that serves the **same paid content** but settles in
+**USDC-SPL on Solana devnet** (x402 **v2** via the PayAI facilitator). Use it when
+your agent wallet pays on Solana instead of Base.
+
+1. **GET** `https://citely.vercel.app/api/v1/sol/articles/<slug>` — same `<slug>` ids.
+2. You get **HTTP 402**. The requirements are in the **`PAYMENT-REQUIRED`** response
+   header (Base64 JSON) *and* the body. Decode `accepts[0]`:
+   - `scheme: "exact"`, `network: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"` (solana-devnet)
+   - `asset: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"` (USDC-SPL, 6 decimals)
+   - `payTo: "6bMe95k9itoYTvef4mE9rCDw1K11BgzMmZxgvjjkoH9s"`, `amount` (base units), and
+     `extra.feePayer` (the facilitator pays the Solana fee — gasless for you).
+3. **Pay and retry**: sign an SPL transfer of `amount` of the USDC mint to `payTo`,
+   then replay the GET with the signed payload in the **`PAYMENT-SIGNATURE`** header.
+   (The presence of the `PAYMENT-REQUIRED` header is what selects the v2 protocol —
+   send `PAYMENT-SIGNATURE`, not `X-PAYMENT`.)
+4. On success you get **HTTP 200** with the **same** JSON body as the Base lane
+   (`slug, title, content, companion, citation`).
+
+Wallet requirements: be funded with **devnet SOL + devnet USDC-SPL**
+(`4zMMC9…ncDU`). A 402 after paying carries the reason as `invalid payment` or
+`settlement failed`. (The Base lane above remains the default; this lane is for
+Solana-native agent wallets.)
+
 ## When you answer the user
 
 - Ground every claim in `content`; do not invent legal conclusions.

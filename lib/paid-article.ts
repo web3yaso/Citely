@@ -1,12 +1,13 @@
 import { getReportBody, getReportMeta } from "./reports";
-import { getCompanionPaidZone } from "./companions";
+import { getCompanionPaidZone, getCompanionPublic, type StarterPrompt } from "./companions";
 import { findRecord } from "./attestation-index";
 
 export type PaidArticleBody = {
   slug: string;
   title: string;
   content: string;
-  companion: string;
+  companion: string; // paid 〔A〕 zone: 原文 / 术语表 / 误区表
+  starterPrompts: StarterPrompt[]; // public 〔C〕 reader starter prompts
   citation: { author: string; attestationUID: string; publishedAt: string };
 };
 
@@ -20,6 +21,7 @@ export function getPaidArticleBody(slug: string): PaidArticleBody {
     title: meta.title,
     content: getReportBody(slug),
     companion: getCompanionPaidZone(slug),
+    starterPrompts: getCompanionPublic(slug).starterPrompts,
     citation: { author: meta.authorName, attestationUID: rec.attestationUID, publishedAt: meta.publishedAt },
   };
 }

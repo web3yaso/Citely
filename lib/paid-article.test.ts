@@ -12,4 +12,12 @@ describe("getPaidArticleBody", () => {
     expect(b.citation.attestationUID).toMatch(/^0x[0-9a-f]+$/i);
     expect(b.citation.publishedAt).toBeTruthy();
   });
+
+  it("includes the public 〔C〕 starter prompts (title + prompt each)", () => {
+    const b = getPaidArticleBody("yaoqian-crypto-liability");
+    expect(Array.isArray(b.starterPrompts)).toBe(true);
+    expect(b.starterPrompts.length).toBeGreaterThanOrEqual(1);
+    expect(b.starterPrompts[0].title.length).toBeGreaterThan(0);
+    expect(b.starterPrompts[0].prompt.length).toBeGreaterThan(0);
+  });
 });

@@ -21,7 +21,8 @@ export type ArticlePaid = {
   slug: string;
   title: string;
   content: string;
-  companion: string;
+  companion: string; // 原文 / 术语表 / 误区表
+  starterPrompts: { title: string; prompt: string }[]; // 〔C〕 reader starter prompts
   citation: { author: string; attestationUID: string; publishedAt: string };
 };
 

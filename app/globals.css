@@ -2012,3 +2012,19 @@ main.howto { max-width: 880px; margin: 0 auto; padding: 56px 28px 0; }
 .howto .cta-actions .primary:hover { background: var(--crimson); color: #fff; }
 .howto .cta-actions .ghost { border: 0.5px solid #4a4339; color: #d6cfc1; }
 .howto .cta-actions .ghost:hover { border-color: var(--crimson-on-dark); color: #fff; }
+
+/* ============================================================
+   Brand mark = the Citely logo image (public/citely-mark.png).
+   Overrides the old CSS-drawn icon across masthead / article / agent headers.
+   ============================================================ */
+.brand .mark,
+.article .hm-brand .mark,
+.article .ag-brand .mark {
+  background: url(/citely-mark.png) center / contain no-repeat;
+  border-radius: 0;
+}
+.brand .mark::before, .brand .mark::after,
+.article .hm-brand .mark::before, .article .hm-brand .mark::after,
+.article .ag-brand .mark::before, .article .ag-brand .mark::after {
+  display: none;
+}

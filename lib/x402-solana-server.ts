@@ -13,8 +13,8 @@ export function solPayTo(): string {
 }
 
 /** Reuse the on-chain price (atomic micro-USDC string) from the attestation index. */
-export function solPriceForSlug(slug: string): string {
-  const rec = findRecord(slug);
+export async function solPriceForSlug(slug: string): Promise<string> {
+  const rec = await findRecord(slug);
   if (!rec) throw new Error(`no published record for ${slug}`);
   return rec.priceUSDC;
 }

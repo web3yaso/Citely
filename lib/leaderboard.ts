@@ -17,9 +17,9 @@ function fmtUsd(atomic: bigint): string {
 
 /** Aggregate published authors (by frontmatter authorName) + their paid earnings.
  *  Authors with no payments still appear at $0.00. */
-export function listLeaderboard(): LeaderboardRow[] {
-  const index = readIndex();
-  const log = readPaymentLog();
+export async function listLeaderboard(): Promise<LeaderboardRow[]> {
+  const index = await readIndex();
+  const log = await readPaymentLog();
 
   type Agg = { name: string; earned: bigint; slugs: Set<string>; sampleSlug: string };
   const byName = new Map<string, Agg>();
@@ -61,19 +61,19 @@ export function listLeaderboard(): LeaderboardRow[] {
     }));
 }
 
-export function getWriterStats(): WriterStats {
+export async function getWriterStats(): Promise<WriterStats> {
   // Only count payments for slugs whose author resolves in the current index — the
   // SAME set the per-author leaderboard uses — so the totals always equal the
   // breakdown. (A payment for an article later removed from the catalog, e.g. by
   // reset-demo, would otherwise inflate the total but not appear under any author.)
   const resolvable = new Set<string>();
   const names = new Set<string>();
-  for (const r of readIndex()) {
+  for (const r of await readIndex()) {
     try { names.add(getReportMeta(r.slug).authorName); resolvable.add(r.slug); } catch {}
   }
   let total = 0n;
   let purchased = 0;
-  for (const p of readPaymentLog()) {
+  for (const p of await readPaymentLog()) {
     if (!resolvable.has(p.slug)) continue;
     try { total += BigInt(p.amount); purchased += 1; } catch { /* skip malformed */ }
   }

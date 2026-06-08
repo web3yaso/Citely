@@ -58,8 +58,8 @@ function formatUsdc(priceUSDC: string): string {
 }
 
 /** Reports that have an on-chain attestation recorded in the index. */
-export function listPublishedReports(): PublishedReport[] {
-  return readIndex()
+export async function listPublishedReports(): Promise<PublishedReport[]> {
+  return (await readIndex())
     .filter((r) => { try { getReportMeta(r.slug); return true; } catch { return false; } })
     .map((r) => ({ meta: getReportMeta(r.slug), record: r, priceUsd: formatUsdc(r.priceUSDC) }));
 }
@@ -67,8 +67,8 @@ export function listPublishedReports(): PublishedReport[] {
 /** The home "收录文章" catalog: every published report, newest first. No hardcoded
  *  exclusions — a freshly published article (e.g. the /publish import example) appears
  *  here as soon as it lands in the index, matching the /reports page. */
-export function listReaderCatalog(): PublishedReport[] {
-  return listPublishedReports().sort((a, b) =>
+export async function listReaderCatalog(): Promise<PublishedReport[]> {
+  return (await listPublishedReports()).sort((a, b) =>
     a.meta.publishedAt < b.meta.publishedAt ? 1 : a.meta.publishedAt > b.meta.publishedAt ? -1 : 0,
   );
 }
@@ -124,11 +124,11 @@ export type CatalogFilters = {
 
 /** The agent-facing catalog (GET /api/v1/articles): published reports, newest
  *  first, metadata only, narrowed by any combination of q / tag / author (AND). */
-export function listAgentCatalog(filters: CatalogFilters = {}): CatalogItem[] {
+export async function listAgentCatalog(filters: CatalogFilters = {}): Promise<CatalogItem[]> {
   const q = filters.q?.trim();
   const tag = filters.tag?.trim().toLowerCase();
   const author = filters.author?.trim().toLowerCase();
-  let items = listReaderCatalog().map(toCatalogItem);
+  let items = (await listReaderCatalog()).map(toCatalogItem);
   if (q) items = items.filter((i) => catalogMatches(i, q));
   if (tag) items = items.filter((i) => i.tags.some((t) => t.toLowerCase().includes(tag)));
   if (author)
@@ -152,9 +152,9 @@ export type AuthorSummary = {
 /** The agent-facing authors list (GET /api/v1/authors): every author with at least
  *  one published article, grouped by name, most articles first then name. Derived from
  *  the same published catalog as /api/v1/articles, so it stays in sync. */
-export function listAuthors(): AuthorSummary[] {
+export async function listAuthors(): Promise<AuthorSummary[]> {
   const byName = new Map<string, AuthorSummary>();
-  for (const item of listAgentCatalog()) {
+  for (const item of await listAgentCatalog()) {
     const cur = byName.get(item.author) ?? {
       name: item.author,
       org: item.authorOrg,
@@ -173,8 +173,8 @@ export function listAuthors(): AuthorSummary[] {
 }
 
 /** A single published report, or null if the slug is not published (not in the index). */
-export function getPublishedReport(slug: string): PublishedReport | null {
-  const rec = readIndex().find((r) => r.slug === slug);
+export async function getPublishedReport(slug: string): Promise<PublishedReport | null> {
+  const rec = (await readIndex()).find((r) => r.slug === slug);
   if (!rec) return null;
   let meta: ReportMeta;
   try { meta = getReportMeta(slug); } catch { return null; }

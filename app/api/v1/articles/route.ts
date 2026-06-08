@@ -11,7 +11,7 @@ const CORS = {
 
 export async function GET(req: NextRequest) {
   const sp = new URL(req.url).searchParams;
-  const articles = listAgentCatalog({
+  const articles = await listAgentCatalog({
     q: sp.get("q") ?? undefined,
     tag: sp.get("tag") ?? undefined,
     author: sp.get("author") ?? undefined,

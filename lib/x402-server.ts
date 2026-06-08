@@ -1,7 +1,6 @@
 import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { createFacilitatorConfig } from "@coinbase/x402";
-import { findRecord } from "./attestation-index";
 
 export const X402_NETWORK = "eip155:84532";
 
@@ -24,14 +23,6 @@ export function slugFromPath(path: string): string {
   return path.replace(/\/+$/, "").split("/").pop() ?? "";
 }
 
-export function payToForSlug(slug: string): string {
-  const rec = findRecord(slug);
-  if (!rec) throw new Error(`no published record for ${slug}`);
-  return rec.author;
-}
-
-export function priceUsdForSlug(slug: string): string {
-  const rec = findRecord(slug);
-  if (!rec) throw new Error(`no published record for ${slug}`);
+export function priceUsdFromRec(rec: { priceUSDC: string }): string {
   return "$" + (Number(BigInt(rec.priceUSDC)) / 1e6).toFixed(2);
 }

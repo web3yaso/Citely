@@ -10,7 +10,7 @@ import { ArticleModeToggle } from "@/components/reports/ArticleModeToggle";
 
 export default async function ReportDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const report = getPublishedReport(slug);
+  const report = await getPublishedReport(slug);
   if (!report) notFound();
   const preview = previewSlice(getReportBody(slug), 0.24);
   const easUrl = `https://base-sepolia.easscan.org/attestation/view/${report.record.attestationUID}`;

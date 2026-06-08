@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { listLeaderboard, getWriterStats } from "./leaderboard";
 
 describe("leaderboard", () => {
-  it("includes seed authors (by name), even with no payments, at $0.00+", () => {
-    const rows = listLeaderboard();
+  it("includes seed authors (by name), even with no payments, at $0.00+", async () => {
+    const rows = await listLeaderboard();
     // The seed catalog (姚前案 + 违法用工) is always present; the DAO import-example
     // may be absent (reset for the live /publish demo), so don't assert on Alex Fan.
     const lawson = rows.find((r) => r.name === "Lawson Riskman");
@@ -14,15 +14,15 @@ describe("leaderboard", () => {
     expect(rows[0].rank).toBe("01");
   });
 
-  it("ranks by earned desc, capped at 10", () => {
-    const rows = listLeaderboard();
+  it("ranks by earned desc, capped at 10", async () => {
+    const rows = await listLeaderboard();
     expect(rows.length).toBeLessThanOrEqual(10);
     const nums = rows.map((r) => Number(r.earned.replace(/[$,]/g, "")));
     expect(nums).toEqual([...nums].sort((a, b) => b - a));
   });
 
-  it("reports writer stats", () => {
-    const s = getWriterStats();
+  it("reports writer stats", async () => {
+    const s = await getWriterStats();
     expect(s.totalEarned).toMatch(/^\$/);
     expect(s.totalPurchased).toBeGreaterThanOrEqual(0);
     expect(s.authorCount).toBeGreaterThanOrEqual(1);

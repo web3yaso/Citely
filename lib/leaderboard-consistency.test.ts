@@ -4,14 +4,14 @@ import { describe, it, expect, vi } from "vitest";
 // two payments for "a" plus one ORPHAN payment for a slug no longer in the index
 // (e.g. an article removed by reset-demo). The orphan must not inflate the totals.
 vi.mock("./payment-log", () => ({
-  readPaymentLog: () => [
+  readPaymentLog: async () => [
     { slug: "a", amount: "300000", payer: "0x", txHash: "0x", ts: 1 },
     { slug: "a", amount: "300000", payer: "0x", txHash: "0x", ts: 2 },
     { slug: "removed", amount: "300000", payer: "0x", txHash: "0x", ts: 3 },
   ],
 }));
 vi.mock("./attestation-index", () => ({
-  readIndex: () => [{ slug: "a", priceUSDC: "300000" }],
+  readIndex: async () => [{ slug: "a", priceUSDC: "300000" }],
 }));
 vi.mock("./reports", () => ({
   getReportMeta: (slug: string) => {
@@ -25,9 +25,9 @@ import { listLeaderboard, getWriterStats } from "./leaderboard";
 const cents = (s: string) => Math.round(Number(s.replace(/[$,]/g, "")) * 100);
 
 describe("leaderboard ↔ writer-stats consistency", () => {
-  it("excludes orphaned payments so the total equals the per-author breakdown", () => {
-    const stats = getWriterStats();
-    const rows = listLeaderboard();
+  it("excludes orphaned payments so the total equals the per-author breakdown", async () => {
+    const stats = await getWriterStats();
+    const rows = await listLeaderboard();
     const sumRows = rows.reduce((acc, r) => acc + cents(r.earned), 0);
 
     expect(cents(stats.totalEarned)).toBe(sumRows); // total == sum of rows

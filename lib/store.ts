@@ -8,6 +8,8 @@ export interface CitelyStore {
   addIndexRecord(rec: AttestationRecord): Promise<void>; // first-write-wins: throws on dup slug
   getPaymentLog(): Promise<PaymentEntry[]>;
   addPaymentEntry(e: PaymentEntry): Promise<boolean>;     // best-effort: false on failure
+  reset(records: AttestationRecord[]): Promise<void>;     // replace the entire index
+  clearPayments(): Promise<void>;                         // empty the payment log
 }
 
 export class FileStore implements CitelyStore {
@@ -36,6 +38,8 @@ export class FileStore implements CitelyStore {
     try { this.writeAtomic(this.logPath, [...this.read<PaymentEntry>(this.logPath), e]); return true; }
     catch { return false; }
   }
+  async reset(records: AttestationRecord[]) { this.writeAtomic(this.indexPath, records); }
+  async clearPayments() { this.writeAtomic(this.logPath, []); }
 }
 
 type RedisLike = {
@@ -43,6 +47,7 @@ type RedisLike = {
   hgetall(key: string): Promise<Record<string, unknown> | null>;
   rpush(key: string, value: string): Promise<number>;
   lrange(key: string, start: number, stop: number): Promise<unknown[]>;
+  del(key: string): Promise<number>;
 };
 const K_INDEX = "citely:index";
 const K_PAY = "citely:payments";
@@ -65,6 +70,11 @@ export class RedisStore implements CitelyStore {
   async addPaymentEntry(e: PaymentEntry) {
     try { await this.redis.rpush(K_PAY, JSON.stringify(e)); return true; } catch { return false; }
   }
+  async reset(records: AttestationRecord[]) {
+    await this.redis.del(K_INDEX);
+    for (const r of records) await this.redis.hsetnx(K_INDEX, r.slug, JSON.stringify(r));
+  }
+  async clearPayments() { await this.redis.del(K_PAY); }
 }
 
 let _store: CitelyStore | null = null;

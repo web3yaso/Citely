@@ -84,7 +84,7 @@ async function main() {
       data: { recipient: articleAuthor, expirationTime: 0n, revocable: true, refUID: "0x" + "0".repeat(64), data },
     });
     const uid = await tx.wait();
-    appendIndex({
+    await appendIndex({
       slug,
       attestationUID: uid,
       txHash: tx.receipt?.hash ?? uid,

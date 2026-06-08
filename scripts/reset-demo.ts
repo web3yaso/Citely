@@ -1,8 +1,8 @@
 /**
- * Reset the demo to a clean pre-recording state:
+ * Reset the demo to a clean pre-recording state (store-backed: file or Redis):
  *   - removes the /publish import-example article (onchain-partnership-rwa) from the
  *     attestation index, so the live /publish → Sign+Attest demo re-adds it
- *     (appendIndex is first-write-wins, so a stale entry would block re-publishing);
+ *     (addIndexRecord is first-write-wins, so a stale entry would block re-publishing);
  *   - clears the payment log, so EARNED starts at $0 and visibly rises during the demo.
  *
  * Keeps the seed articles (姚前案 / 违法用工) and ALL content files (.mdx/.enc/companions).
@@ -10,20 +10,30 @@
  *
  *   node_modules/.bin/tsx scripts/reset-demo.ts
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { getStore } from "../lib/store";
 
-const IMPORT_EXAMPLE = "onchain-partnership-rwa";
-const indexPath = resolve(process.cwd(), "data/attestation-index.json");
-const logPath = resolve(process.cwd(), "data/payment-log.json");
+// Minimal .env.local loader (no dependency) — needed so getStore() can see Redis env.
+function loadEnvLocal(): void {
+  try {
+    const txt = readFileSync(resolve(process.cwd(), ".env.local"), "utf8");
+    for (const line of txt.split("\n")) {
+      const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
+  } catch { /* rely on process.env */ }
+}
+loadEnvLocal();
 
-const index: Array<{ slug: string }> = existsSync(indexPath)
-  ? JSON.parse(readFileSync(indexPath, "utf8"))
-  : [];
-const kept = index.filter((r) => r.slug !== IMPORT_EXAMPLE);
-writeFileSync(indexPath, JSON.stringify(kept, null, 2) + "\n");
-writeFileSync(logPath, "[]\n");
+const DAO = "onchain-partnership-rwa";
 
-console.log(
-  `reset-demo: removed '${IMPORT_EXAMPLE}' from index (kept ${kept.length} seed${kept.length === 1 ? "" : "s"}); payment-log cleared.`,
-);
+async function main() {
+  const store = getStore();
+  const kept = (await store.getIndex()).filter((r) => r.slug !== DAO);
+  await store.reset(kept);
+  await store.clearPayments();
+  console.log(`reset-demo: dropped '${DAO}' (kept ${kept.length}); payment-log cleared.`);
+}
+
+main();

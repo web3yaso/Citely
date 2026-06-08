@@ -9,6 +9,7 @@
     "test": "vitest run",
     "register-schema": "tsx scripts/eas-register-schema.ts",
     "seed": "tsx scripts/seed-attest.ts",
+    "seed-kv": "tsx scripts/seed-kv.ts",
     "ingest": "tsx scripts/ingest-wechat.ts",
     "sol:verify": "tsx scripts/sol-x402-verify.ts",
     "reset-demo": "tsx scripts/reset-demo.ts",

@@ -33,6 +33,14 @@ describe("FileStore", () => {
     expect(await s.addPaymentEntry(pay("a"))).toBe(true);
     expect((await s.getPaymentLog()).length).toBe(1);
   });
+  it("reset replaces the index and clearPayments empties the log", async () => {
+    await s.addIndexRecord(rec("a"));
+    await s.addPaymentEntry(pay("a"));
+    await s.reset([rec("b"), rec("c")]);
+    await s.clearPayments();
+    expect((await s.getIndex()).map((r) => r.slug)).toEqual(["b", "c"]);
+    expect((await s.getPaymentLog()).length).toBe(0);
+  });
 });
 
 describe("RedisStore", () => {
@@ -52,6 +60,7 @@ describe("RedisStore", () => {
         const l = lists.get(key) ?? []; lists.set(key, l); l.push(value); return l.length;
       },
       async lrange(key: string) { return lists.get(key) ?? []; },
+      async del(key: string) { const had = hashes.delete(key); lists.delete(key); return had ? 1 : 0; },
     };
   }
   it("HSETNX gives first-write-wins; HGETALL round-trips", async () => {
@@ -59,6 +68,12 @@ describe("RedisStore", () => {
     await s.addIndexRecord(rec("a"));
     await expect(s.addIndexRecord(rec("a"))).rejects.toThrow(/already published/i);
     expect((await s.getIndex()).map((r) => r.slug)).toEqual(["a"]);
+  });
+  it("reset + clearPayments via redis", async () => {
+    const s = new RedisStore(fakeRedis() as any);
+    await s.addIndexRecord(rec("a"));
+    await s.reset([rec("b")]);
+    expect((await s.getIndex()).map((r) => r.slug)).toEqual(["b"]);
   });
   it("addPaymentEntry returns false when redis throws", async () => {
     const bad = { rpush: async () => { throw new Error("down"); } } as any;

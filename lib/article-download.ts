@@ -1,8 +1,9 @@
 /**
  * article-download.ts
  *
- * After a human reader pays to unlock an article, auto-download a zip with the
- * full report and its companion prompts. See
+ * After a human reader pays to unlock an article, auto-download a zip with three
+ * files: the full report, the paid companion (原文/术语表/误区表), and the
+ * reader 〔C〕 starter prompts. See
  * docs/superpowers/specs/2026-06-04-auto-download-after-payment-design.md.
  *
  * `buildArticleFiles` is pure (unit-tested). `downloadArticleZip` is the
@@ -17,12 +18,15 @@ const EAS_EXPLORER = "https://base-sepolia.easscan.org/attestation/view/";
 
 export function buildArticleFiles(full: ArticlePaid): {
   reportMd: string;
+  companionMd: string;
   promptsMd: string;
   zipName: string;
   reportName: string;
+  companionName: string;
   promptsName: string;
 } {
-  const { slug, title, content, companion, citation } = full;
+  const { slug, title, content, companion, starterPrompts, citation } = full;
+  const credit = `> 作者：${citation.author} · EAS：${citation.attestationUID}\n\n`;
 
   const reportMd =
     `# ${title}\n\n` +
@@ -36,27 +40,34 @@ export function buildArticleFiles(full: ArticlePaid): {
     `---\n\n` +
     `${normalizeMarkdown(content, { title })}\n`;
 
-  const promptsMd =
-    `# ${title} · 配套 Prompts\n\n` +
-    `> 作者：${citation.author} · EAS：${citation.attestationUID}\n\n` +
-    `---\n\n` +
-    `${companion}\n`;
+  // The paid 〔A〕 zone: 原文 / 术语表 / 误区表.
+  const companionMd =
+    `# ${title} · 配套资料（原文 / 术语表 / 误区表）\n\n` + credit + `---\n\n${companion}\n`;
+
+  // The public 〔C〕 reader starter prompts — what an agent can run verbatim.
+  const promptsBody = starterPrompts.length
+    ? starterPrompts.map((p, i) => `## ${i + 1}. ${p.title}\n\n> ${p.prompt}`).join("\n\n")
+    : "（这篇暂无起手 prompt）";
+  const promptsMd = `# ${title} · 起手 Prompts\n\n` + credit + `---\n\n${promptsBody}\n`;
 
   return {
     reportMd,
+    companionMd,
     promptsMd,
     zipName: `citely-${slug}.zip`,
     reportName: `${slug}.md`,
+    companionName: `${slug}-companion.md`,
     promptsName: `${slug}-prompts.md`,
   };
 }
 
 export function downloadArticleZip(full: ArticlePaid): void {
   try {
-    const { reportMd, promptsMd, zipName, reportName, promptsName } =
+    const { reportMd, companionMd, promptsMd, zipName, reportName, companionName, promptsName } =
       buildArticleFiles(full);
     const zipped = zipSync({
       [reportName]: strToU8(reportMd),
+      [companionName]: strToU8(companionMd),
       [promptsName]: strToU8(promptsMd),
     });
     // Copy into a fresh ArrayBuffer-backed Uint8Array for Blob (avoids SAB typing).

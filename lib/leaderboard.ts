@@ -62,9 +62,20 @@ export function listLeaderboard(): LeaderboardRow[] {
 }
 
 export function getWriterStats(): WriterStats {
-  const log = readPaymentLog();
-  const total = log.reduce((acc, p) => { try { return acc + BigInt(p.amount); } catch { return acc; } }, 0n);
+  // Only count payments for slugs whose author resolves in the current index — the
+  // SAME set the per-author leaderboard uses — so the totals always equal the
+  // breakdown. (A payment for an article later removed from the catalog, e.g. by
+  // reset-demo, would otherwise inflate the total but not appear under any author.)
+  const resolvable = new Set<string>();
   const names = new Set<string>();
-  for (const r of readIndex()) { try { names.add(getReportMeta(r.slug).authorName); } catch {} }
-  return { totalPurchased: log.length, totalEarned: fmtUsd(total), authorCount: names.size };
+  for (const r of readIndex()) {
+    try { names.add(getReportMeta(r.slug).authorName); resolvable.add(r.slug); } catch {}
+  }
+  let total = 0n;
+  let purchased = 0;
+  for (const p of readPaymentLog()) {
+    if (!resolvable.has(p.slug)) continue;
+    try { total += BigInt(p.amount); purchased += 1; } catch { /* skip malformed */ }
+  }
+  return { totalPurchased: purchased, totalEarned: fmtUsd(total), authorCount: names.size };
 }

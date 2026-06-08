@@ -6,7 +6,7 @@
     "description": "Discover and read expert Web3 legal / compliance / security risk reports. Listing is free; full text is behind an x402 paywall (USDC on Base Sepolia). See /SKILL.md for the agent reading flow.",
     "license": { "name": "Authors keep 100% — 0% platform fee" }
   },
-  "servers": [{ "url": "https://citely.vercel.app", "description": "Base Sepolia testnet deployment" }],
+  "servers": [{ "url": "https://citely-nine.vercel.app", "description": "Base Sepolia testnet deployment" }],
   "paths": {
     "/api/v1/articles": {
       "get": {
@@ -90,6 +90,36 @@
           }
         }
       }
+    },
+    "/api/v1/sol/articles/{slug}": {
+      "get": {
+        "operationId": "readArticleSolana",
+        "summary": "Read a report (x402 paid, Solana devnet)",
+        "description": "Parallel Solana devnet lane — same paid content as /api/v1/articles/{slug}, settled in USDC-SPL on Solana devnet via the PayAI facilitator (x402 v2). First call returns 402 with the requirements in the `PAYMENT-REQUIRED` response header (Base64 JSON) and body. The payer signs an SPL transfer of `amount` of the USDC mint to `payTo` (gas is covered by the facilitator's `accepts[0].extra.feePayer`), then retries with the signed payload in the `PAYMENT-SIGNATURE` header to get 200. Fixed params: network solana-devnet (CAIP-2 solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1), asset USDC-SPL 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU (6 decimals), payTo 6bMe95k9itoYTvef4mE9rCDw1K11BgzMmZxgvjjkoH9s. The payTo must already have a USDC ATA. Price reuses the article's on-chain priceUSDC.",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string", "pattern": "^[a-z0-9-]{1,80}$" }, "example": "yaoqian-crypto-liability" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paid: full report + companion + on-chain citation (identical body to the Base lane).",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ArticlePaid" } } }
+          },
+          "402": {
+            "description": "Payment Required — sign the USDC-SPL transfer per the requirements and retry with the PAYMENT-SIGNATURE header.",
+            "headers": {
+              "PAYMENT-REQUIRED": {
+                "description": "Base64-encoded JSON payment requirements (x402 v2). Decode to read accepts[0]: { scheme: \"exact\", network, amount, payTo, asset, maxTimeoutSeconds, extra.feePayer }. Its presence is how the client selects the v2 protocol.",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          },
+          "404": {
+            "description": "Unknown or unpublished slug.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -135,12 +165,21 @@
       },
       "ArticlePaid": {
         "type": "object",
-        "required": ["slug", "title", "content", "companion", "citation"],
+        "required": ["slug", "title", "content", "companion", "starterPrompts", "citation"],
         "properties": {
           "slug": { "type": "string" },
           "title": { "type": "string" },
           "content": { "type": "string", "description": "Full article markdown." },
-          "companion": { "type": "string", "description": "Glossary / legal map / misconceptions (paid-only)." },
+          "companion": { "type": "string", "description": "Paid 〔A〕 zone: 原文 / 术语表 (glossary) / 误区表 (misconceptions)." },
+          "starterPrompts": {
+            "type": "array",
+            "description": "Reader 〔C〕 starter prompts an agent can run verbatim.",
+            "items": {
+              "type": "object",
+              "required": ["title", "prompt"],
+              "properties": { "title": { "type": "string" }, "prompt": { "type": "string" } }
+            }
+          },
           "citation": { "$ref": "#/components/schemas/Citation" }
         }
       },

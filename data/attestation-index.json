@@ -11,8 +11,8 @@
   },
   {
     "slug": "web3-illegal-employment",
-    "attestationUID": "0x16669c5a17d62f52529971e24151e8d91220318f9ecc29ff087b2f57f449f7f6",
-    "txHash": "0x20fc5d67096155adfe1b44ef2f88928991f63a212182925a109ee02becc4b322",
+    "attestationUID": "0x2534259921257c87d6ce292f207ad3efd959d5706f5e091c64dd527948fff887",
+    "txHash": "0xc6ea913082ecebbddd6fce9b43904589c5fcd42e520a61df484e15e1b7502e27",
     "author": "0xCC2D5DC5148d8Ad52Da32bd7C6B6F9d43510A392",
     "priceUSDC": "250000",
     "publishedAt": 1770336000,

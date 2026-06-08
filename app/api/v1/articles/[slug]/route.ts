@@ -7,8 +7,7 @@ import {
   payToForSlug,
   priceUsdForSlug,
 } from "@/lib/x402-server";
-import { getReportBody, getReportMeta } from "@/lib/reports";
-import { getCompanionPaidZone } from "@/lib/companions";
+import { getPaidArticleBody } from "@/lib/paid-article";
 import { findRecord } from "@/lib/attestation-index";
 import { appendPaymentLog } from "@/lib/payment-log";
 import type { HTTPRequestContext } from "@x402/core/server";
@@ -22,10 +21,7 @@ const CORS = {
 
 const handler = async (req: NextRequest): Promise<NextResponse> => {
   const slug = slugFromPath(new URL(req.url).pathname);
-  const meta = getReportMeta(slug);
   const rec = findRecord(slug)!;
-  const content = getReportBody(slug);
-  const companion = getCompanionPaidZone(slug);
   // Handler only runs after the facilitator verified payment → log it (for the leaderboard, Phase 5).
   appendPaymentLog({
     slug,
@@ -34,20 +30,8 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
     txHash: rec.attestationUID,
     ts: Date.now(),
   });
-  return NextResponse.json(
-    {
-      slug,
-      title: meta.title,
-      content,
-      companion,
-      citation: {
-        author: meta.authorName,
-        attestationUID: rec.attestationUID,
-        publishedAt: meta.publishedAt,
-      },
-    },
-    { headers: CORS },
-  );
+  // Shared body (full text + companion + 〔C〕 starter prompts + citation) — same on both lanes.
+  return NextResponse.json(getPaidArticleBody(slug), { headers: CORS });
 };
 
 const paid = withX402(

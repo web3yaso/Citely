@@ -25,10 +25,10 @@ describe("AgentsPanel", () => {
     expect(screen.getByRole("button", { name: "Cobo" })).toHaveClass("active");
     expect(screen.getByText(/cobo-agentic-wallet/)).toBeInTheDocument();
 
-    // Picking AgentCash updates both the active pill and the setup prompt.
-    await user.click(screen.getByRole("button", { name: "AgentCash" }));
-    expect(screen.getByRole("button", { name: "AgentCash" })).toHaveClass("active");
+    // Picking PayAI (the Solana lane) updates both the active pill and the setup prompt.
+    await user.click(screen.getByRole("button", { name: "PayAI" }));
+    expect(screen.getByRole("button", { name: "PayAI" })).toHaveClass("active");
     expect(screen.getByRole("button", { name: "Cobo" })).not.toHaveClass("active");
-    expect(screen.getByText(/agentcash\.io\/SKILL\.md/)).toBeInTheDocument();
+    expect(screen.getByText(/Pay on Solana devnet via the PayAI facilitator/)).toBeInTheDocument();
   });
 });

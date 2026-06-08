@@ -39,7 +39,8 @@ article's `read` path to pay and read it.
      "slug": "...",
      "title": "...",
      "content": "<full article markdown>",
-     "companion": "<glossary / legal-map / misconceptions, paid-only>",
+     "companion": "<原文 / 术语表(glossary) / 误区表(misconceptions), paid 〔A〕 zone>",
+     "starterPrompts": [{ "title": "...", "prompt": "<reader 〔C〕 prompt to run verbatim>" }],
      "citation": { "author": "...", "attestationUID": "0x...", "publishedAt": "..." }
    }
    ```

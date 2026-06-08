@@ -34,7 +34,8 @@ const RESPONSE_SHAPE = `// 200 OK — paid read
   "slug": "...",
   "title": "...",
   "content": "<full article markdown>",
-  "companion": "<glossary / legal map / misconceptions (paid-only)>",
+  "companion": "<原文 / 术语表 / 误区表 (paid-only)>",
+  "starterPrompts": [{ "title": "...", "prompt": "<reader prompt>" }],
   "citation": { "author": "...", "attestationUID": "0x...", "publishedAt": "..." }
 }`;
 

@@ -165,12 +165,21 @@
       },
       "ArticlePaid": {
         "type": "object",
-        "required": ["slug", "title", "content", "companion", "citation"],
+        "required": ["slug", "title", "content", "companion", "starterPrompts", "citation"],
         "properties": {
           "slug": { "type": "string" },
           "title": { "type": "string" },
           "content": { "type": "string", "description": "Full article markdown." },
-          "companion": { "type": "string", "description": "Glossary / legal map / misconceptions (paid-only)." },
+          "companion": { "type": "string", "description": "Paid 〔A〕 zone: 原文 / 术语表 (glossary) / 误区表 (misconceptions)." },
+          "starterPrompts": {
+            "type": "array",
+            "description": "Reader 〔C〕 starter prompts an agent can run verbatim.",
+            "items": {
+              "type": "object",
+              "required": ["title", "prompt"],
+              "properties": { "title": { "type": "string" }, "prompt": { "type": "string" } }
+            }
+          },
           "citation": { "$ref": "#/components/schemas/Citation" }
         }
       },

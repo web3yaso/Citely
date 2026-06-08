@@ -1,30 +1,30 @@
 import { vi, describe, it, expect } from "vitest";
 
-// Keep the real read fns; force writes to fail like a read-only serverless FS.
-vi.mock("node:fs", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("node:fs")>();
-  return {
-    ...actual,
-    writeFileSync: () => {
-      throw new Error("EROFS: read-only file system");
-    },
-  };
-});
+// The write path now lives in the store (FileStore). Simulate a read-only
+// serverless FS by making the store's addPaymentEntry fail (returns false),
+// while reads still return an array. (Previously this mocked node:fs.writeFileSync,
+// but the destructured named import inside store.ts isn't intercepted by that mock.)
+vi.mock("./store", () => ({
+  getStore: () => ({
+    getPaymentLog: async () => [],
+    addPaymentEntry: async () => false,
+  }),
+}));
 
 import { readPaymentLog, appendPaymentLog } from "./payment-log";
 
 describe("readPaymentLog", () => {
-  it("returns an array", () => {
-    expect(Array.isArray(readPaymentLog())).toBe(true);
+  it("returns an array", async () => {
+    expect(Array.isArray(await readPaymentLog())).toBe(true);
   });
 });
 
 describe("appendPaymentLog (best-effort)", () => {
   const entry = { slug: "x", payer: "0x0", amount: "1", txHash: "0x0", ts: 1 };
 
-  it("does not throw and returns false when the write fails (read-only fs, e.g. Vercel)", () => {
+  it("does not throw and returns false when the write fails (read-only fs, e.g. Vercel)", async () => {
     // A settled paid unlock must still return content even if logging can't persist.
-    expect(() => appendPaymentLog(entry)).not.toThrow();
-    expect(appendPaymentLog(entry)).toBe(false);
+    await expect(appendPaymentLog(entry)).resolves.not.toThrow();
+    expect(await appendPaymentLog(entry)).toBe(false);
   });
 });

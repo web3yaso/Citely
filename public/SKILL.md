@@ -9,7 +9,7 @@ Follow this exactly. Do not summarize this file; use it as operating context.
 
 ## Discover articles (free)
 
-**GET** `https://citely.vercel.app/api/v1/articles` — lists the catalog, newest
+**GET** `https://citely-nine.vercel.app/api/v1/articles` — lists the catalog, newest
 first, as `{ count, articles: [{ slug, title, summary, author, authorOrg, tags,
 price, priceUSDC, publishedAt, attestationUID, read }] }`. Metadata only (no body).
 Each item's **`read`** is the path to fetch that article (e.g.
@@ -17,14 +17,14 @@ Each item's **`read`** is the path to fetch that article (e.g.
 `?q=<text>` (title / summary / author / tags), `?tag=<tag>`, and/or
 `?author=<name>` (combined with AND), e.g. `/api/v1/articles?author=Lawson&tag=刑事`.
 
-**GET** `https://citely.vercel.app/api/v1/authors` — free authors list, grouped by
+**GET** `https://citely-nine.vercel.app/api/v1/authors` — free authors list, grouped by
 name: `{ count, authors: [{ name, org, articleCount, tags, articles: [{ slug, title,
 read }] }] }`, most articles first. Use it to browse by author, then follow an
 article's `read` path to pay and read it.
 
 ## How to read a paid report
 
-1. **GET** `https://citely.vercel.app/api/v1/articles/<slug>`
+1. **GET** `https://citely-nine.vercel.app/api/v1/articles/<slug>`
    - `<slug>` is a report id from the catalog above, e.g. `yaoqian-crypto-liability`.
 2. You will get **HTTP 402 Payment Required**. The response carries the payment
    requirements (scheme `exact`, network `eip155:84532` = Base Sepolia, the USDC
@@ -59,7 +59,7 @@ There is a parallel lane that serves the **same paid content** but settles in
 **USDC-SPL on Solana devnet** (x402 **v2** via the PayAI facilitator). Use it when
 your agent wallet pays on Solana instead of Base.
 
-1. **GET** `https://citely.vercel.app/api/v1/sol/articles/<slug>` — same `<slug>` ids.
+1. **GET** `https://citely-nine.vercel.app/api/v1/sol/articles/<slug>` — same `<slug>` ids.
 2. You get **HTTP 402**. The requirements are in the **`PAYMENT-REQUIRED`** response
    header (Base64 JSON) *and* the body. Decode `accepts[0]`:
    - `scheme: "exact"`, `network: "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"` (solana-devnet)

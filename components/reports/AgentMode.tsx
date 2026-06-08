@@ -15,11 +15,11 @@ interface Props {
 export function AgentMode({ slug, title, priceUsd, authorName, companion, sourceUrl }: Props) {
   const showSource = isExternalSourceUrl(sourceUrl);
   const setupPrompt = `You are helping me read an Citely report.
-Fetch https://citely.vercel.app/SKILL.md as raw context (do not summarize) and follow it.
+Fetch https://citely-nine.vercel.app/SKILL.md as raw context (do not summarize) and follow it.
 Use Cobo Agentic Wallet to make the x402 payment on Base.
 
 Then read this report:
-GET https://citely.vercel.app/api/v1/articles/${slug}
+GET https://citely-nine.vercel.app/api/v1/articles/${slug}
 The x402 price is returned in the 402 Payment Required response — pay ${priceUsd} and retry.
 The 200 response returns full markdown + the article's glossary / legal-map / misconceptions.
 

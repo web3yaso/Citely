@@ -6,7 +6,7 @@
     "description": "Discover and read expert Web3 legal / compliance / security risk reports. Listing is free; full text is behind an x402 paywall (USDC on Base Sepolia). See /SKILL.md for the agent reading flow.",
     "license": { "name": "Authors keep 100% — 0% platform fee" }
   },
-  "servers": [{ "url": "https://citely.vercel.app", "description": "Base Sepolia testnet deployment" }],
+  "servers": [{ "url": "https://citely-nine.vercel.app", "description": "Base Sepolia testnet deployment" }],
   "paths": {
     "/api/v1/articles": {
       "get": {

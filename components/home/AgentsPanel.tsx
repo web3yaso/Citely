@@ -68,7 +68,7 @@ export function AgentsPanel() {
 
       <DPrompt
         label="Setup Prompt"
-        body={"Fetch https://citely.vercel.app/SKILL.md as raw context (do not summarize)\nand follow it. Use Cobo Agentic Wallet to make the x402 payment on Base."}
+        body={"Fetch https://citely-nine.vercel.app/SKILL.md as raw context (do not summarize)\nand follow it. Use Cobo Agentic Wallet to make the x402 payment on Base."}
       />
 
       <div className="a-sec-num" style={{ marginTop: "48px" }}>3. Or call the endpoint directly</div>

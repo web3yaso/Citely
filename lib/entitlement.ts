@@ -7,7 +7,15 @@
  * no full text is persisted client-side.
  */
 
+import { recoverMessageAddress } from "viem";
 import { readPaymentLog } from "./payment-log";
+
+export type EntitlementResult =
+  | { ok: true; address: string }
+  | { ok: false; reason: "bad_signature" | "slug_mismatch" | "expired" | "not_paid" };
+
+const MAX_AGE_MS = 5 * 60 * 1000;
+const FUTURE_SKEW_MS = 60 * 1000;
 
 const SLUG_PREFIX = "文章: ";
 const TIME_PREFIX = "时间: ";
@@ -45,4 +53,29 @@ export async function hasPaidFor(slug: string, address: string): Promise<boolean
   const addr = address.toLowerCase();
   const log = await readPaymentLog();
   return log.some((e) => e.slug === slug && e.payer.toLowerCase() === addr);
+}
+
+/**
+ * Verify a signed entitlement request: recover the signer, confirm the message
+ * targets this slug and is recent (≤5min, small future skew allowed), then check
+ * the payment log. Replay window is bounded by the timestamp; a server-issued
+ * nonce store is intentionally out of scope (see spec).
+ */
+export async function verifyEntitlement(input: {
+  slug: string;
+  message: string;
+  signature: `0x${string}`;
+}): Promise<EntitlementResult> {
+  let recovered: string;
+  try {
+    recovered = (await recoverMessageAddress({ message: input.message, signature: input.signature })).toLowerCase();
+  } catch {
+    return { ok: false, reason: "bad_signature" };
+  }
+  const parsed = parseEntitlementMessage(input.message);
+  if (!parsed || parsed.slug !== input.slug) return { ok: false, reason: "slug_mismatch" };
+  const age = Date.now() - parsed.issuedAt;
+  if (age > MAX_AGE_MS || age < -FUTURE_SKEW_MS) return { ok: false, reason: "expired" };
+  if (!(await hasPaidFor(input.slug, recovered))) return { ok: false, reason: "not_paid" };
+  return { ok: true, address: recovered };
 }

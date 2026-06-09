@@ -73,7 +73,8 @@ export async function verifyEntitlement(input: {
     return { ok: false, reason: "bad_signature" };
   }
   const parsed = parseEntitlementMessage(input.message);
-  if (!parsed || parsed.slug !== input.slug) return { ok: false, reason: "slug_mismatch" };
+  if (!parsed) return { ok: false, reason: "bad_signature" }; // signed, but not a Citely entitlement message
+  if (parsed.slug !== input.slug) return { ok: false, reason: "slug_mismatch" };
   const age = Date.now() - parsed.issuedAt;
   if (age > MAX_AGE_MS || age < -FUTURE_SKEW_MS) return { ok: false, reason: "expired" };
   if (!(await hasPaidFor(input.slug, recovered))) return { ok: false, reason: "not_paid" };

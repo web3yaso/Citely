@@ -72,6 +72,13 @@ describe("verifyEntitlement", () => {
     expect(res).toEqual({ ok: false, reason: "bad_signature" });
   });
 
+  it("bad_signature when the message is validly signed but not a Citely entitlement message", async () => {
+    const message = "hello from some other app";
+    const signature = await account.signMessage({ message });
+    const res = await verifyEntitlement({ slug: SLUG, message, signature });
+    expect(res).toEqual({ ok: false, reason: "bad_signature" });
+  });
+
   it("slug_mismatch when the signed slug differs from the requested slug", async () => {
     paymentLog.entries = [{ slug: SLUG, payer: account.address, amount: "1", txHash: "0x0", ts: 1 }];
     const { message, signature } = await signFor("some-other-article", Date.now());

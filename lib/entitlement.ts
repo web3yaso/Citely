@@ -7,6 +7,8 @@
  * no full text is persisted client-side.
  */
 
+import { readPaymentLog } from "./payment-log";
+
 const SLUG_PREFIX = "文章: ";
 const TIME_PREFIX = "时间: ";
 
@@ -36,4 +38,11 @@ export function parseEntitlementMessage(message: string): { slug: string; issued
   const issuedAt = Date.parse(timeLine.slice(TIME_PREFIX.length).trim());
   if (!slug || Number.isNaN(issuedAt)) return null;
   return { slug, issuedAt };
+}
+
+/** True if `address` appears as the payer for `slug` in the payment log. */
+export async function hasPaidFor(slug: string, address: string): Promise<boolean> {
+  const addr = address.toLowerCase();
+  const log = await readPaymentLog();
+  return log.some((e) => e.slug === slug && e.payer.toLowerCase() === addr);
 }

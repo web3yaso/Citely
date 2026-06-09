@@ -11,7 +11,7 @@ const CORS = {
 };
 
 export async function GET() {
-  const authors = listAuthors();
+  const authors = await listAuthors();
   return NextResponse.json({ count: authors.length, authors }, { headers: CORS });
 }
 

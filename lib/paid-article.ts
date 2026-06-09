@@ -12,9 +12,9 @@ export type PaidArticleBody = {
 };
 
 /** The shared paid 200 body — identical shape on both the Base and Solana lanes. */
-export function getPaidArticleBody(slug: string): PaidArticleBody {
+export async function getPaidArticleBody(slug: string): Promise<PaidArticleBody> {
   const meta = getReportMeta(slug);
-  const rec = findRecord(slug);
+  const rec = await findRecord(slug);
   if (!rec) throw new Error(`no published record for ${slug}`);
   return {
     slug,

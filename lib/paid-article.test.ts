@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { getPaidArticleBody } from "./paid-article";
 
 describe("getPaidArticleBody", () => {
-  it("returns slug/title/content/companion/citation for a seeded slug", () => {
-    const b = getPaidArticleBody("yaoqian-crypto-liability");
+  it("returns slug/title/content/companion/citation for a seeded slug", async () => {
+    const b = await getPaidArticleBody("yaoqian-crypto-liability");
     expect(b.slug).toBe("yaoqian-crypto-liability");
     expect(typeof b.title).toBe("string");
     expect(b.content.length).toBeGreaterThan(100);
@@ -13,8 +13,8 @@ describe("getPaidArticleBody", () => {
     expect(b.citation.publishedAt).toBeTruthy();
   });
 
-  it("includes the public 〔C〕 starter prompts (title + prompt each)", () => {
-    const b = getPaidArticleBody("yaoqian-crypto-liability");
+  it("includes the public 〔C〕 starter prompts (title + prompt each)", async () => {
+    const b = await getPaidArticleBody("yaoqian-crypto-liability");
     expect(Array.isArray(b.starterPrompts)).toBe(true);
     expect(b.starterPrompts.length).toBeGreaterThanOrEqual(1);
     expect(b.starterPrompts[0].title.length).toBeGreaterThan(0);

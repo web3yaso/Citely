@@ -21,7 +21,7 @@ export async function GET(
 ) {
   const { slug } = await params;
   // slug whitelist BEFORE the paywall — invalid/unpublished → 404, never a 402.
-  if (!SLUG_RE.test(slug) || !findRecord(slug)) {
+  if (!SLUG_RE.test(slug) || !(await findRecord(slug))) {
     return NextResponse.json({ error: "not found" }, { status: 404, headers: CORS });
   }
 
@@ -29,7 +29,7 @@ export async function GET(
   const resourceUrl = new URL(req.url).toString();
   const requirements = await x402.createPaymentRequirements(
     {
-      amount: solPriceForSlug(slug),
+      amount: await solPriceForSlug(slug),
       asset: { address: SOL_USDC_MINT, decimals: SOL_USDC_DECIMALS },
       description: `Citely — paid article (Solana): ${slug}`,
     },
@@ -64,7 +64,7 @@ export async function GET(
       { status: 402, headers: CORS },
     );
   }
-  return NextResponse.json(getPaidArticleBody(slug), { headers: CORS });
+  return NextResponse.json(await getPaidArticleBody(slug), { headers: CORS });
 }
 
 export function OPTIONS() {

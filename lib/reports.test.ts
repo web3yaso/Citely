@@ -26,36 +26,36 @@ describe("reports loader", () => {
 });
 
 describe("published reports join", () => {
-  it("lists a published seed report with a formatted price", () => {
+  it("lists a published seed report with a formatted price", async () => {
     // The DAO article (onchain-partnership-rwa) is the unpublished /publish import
     // example; the always-published seed is yaoqian-crypto-liability ($0.30).
-    const seed = listPublishedReports().find((r) => r.meta.slug === "yaoqian-crypto-liability");
+    const seed = (await listPublishedReports()).find((r) => r.meta.slug === "yaoqian-crypto-liability");
     expect(seed).toBeTruthy();
     expect(seed!.priceUsd).toBe("$0.30");
   });
-  it("returns null for an unpublished slug", () => {
-    expect(getPublishedReport("does-not-exist")).toBeNull();
+  it("returns null for an unpublished slug", async () => {
+    expect(await getPublishedReport("does-not-exist")).toBeNull();
   });
 });
 
 describe("reader catalog (home 收录文章)", () => {
-  it("includes every published report — no hardcoded slug exclusion", () => {
+  it("includes every published report — no hardcoded slug exclusion", async () => {
     // Regression: the DAO import-example must appear here once it is published
     // (it was previously dropped by a hardcoded filter in app/page.tsx).
-    const catalog = listReaderCatalog().map((r) => r.meta.slug).sort();
-    const published = listPublishedReports().map((r) => r.meta.slug).sort();
+    const catalog = (await listReaderCatalog()).map((r) => r.meta.slug).sort();
+    const published = (await listPublishedReports()).map((r) => r.meta.slug).sort();
     expect(catalog).toEqual(published);
   });
 
-  it("is sorted newest-first by publishedAt", () => {
-    const dates = listReaderCatalog().map((r) => r.meta.publishedAt);
+  it("is sorted newest-first by publishedAt", async () => {
+    const dates = (await listReaderCatalog()).map((r) => r.meta.publishedAt);
     expect(dates).toEqual([...dates].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0)));
   });
 });
 
 describe("agent catalog (GET /api/v1/articles)", () => {
-  it("projects a published report to metadata-only catalog items (no body)", () => {
-    const items = listAgentCatalog();
+  it("projects a published report to metadata-only catalog items (no body)", async () => {
+    const items = await listAgentCatalog();
     const yq = items.find((i) => i.slug === "yaoqian-crypto-liability");
     expect(yq).toBeTruthy();
     expect(yq!.title).toContain("姚前");
@@ -67,42 +67,42 @@ describe("agent catalog (GET /api/v1/articles)", () => {
     expect(yq as Record<string, unknown>).not.toHaveProperty("content");
   });
 
-  it("filters by a free-text query over title/summary/author/tags", () => {
-    expect(listAgentCatalog({ q: "劳动" }).some((i) => i.slug === "web3-illegal-employment")).toBe(true);
-    expect(listAgentCatalog({ q: "zzz-no-such-term-xyz" })).toHaveLength(0);
+  it("filters by a free-text query over title/summary/author/tags", async () => {
+    expect((await listAgentCatalog({ q: "劳动" })).some((i) => i.slug === "web3-illegal-employment")).toBe(true);
+    expect(await listAgentCatalog({ q: "zzz-no-such-term-xyz" })).toHaveLength(0);
     // empty/whitespace query returns the full catalog
-    expect(listAgentCatalog({ q: "   " }).length).toBe(listAgentCatalog().length);
+    expect((await listAgentCatalog({ q: "   " })).length).toBe((await listAgentCatalog()).length);
   });
 
-  it("filters by ?tag= (case-insensitive substring on tags)", () => {
-    const crim = listAgentCatalog({ tag: "刑事" }).map((i) => i.slug);
+  it("filters by ?tag= (case-insensitive substring on tags)", async () => {
+    const crim = (await listAgentCatalog({ tag: "刑事" })).map((i) => i.slug);
     expect(crim).toContain("yaoqian-crypto-liability");
     expect(crim).not.toContain("web3-illegal-employment");
   });
 
-  it("filters by ?author= (matches author name or org)", () => {
-    const lawson = listAgentCatalog({ author: "lawson" }).map((i) => i.slug);
+  it("filters by ?author= (matches author name or org)", async () => {
+    const lawson = (await listAgentCatalog({ author: "lawson" })).map((i) => i.slug);
     expect(lawson).toContain("web3-illegal-employment");
     expect(lawson).toContain("yaoqian-crypto-liability");
   });
 
-  it("combines filters with AND", () => {
-    const r = listAgentCatalog({ author: "Lawson", tag: "刑事" }).map((i) => i.slug);
+  it("combines filters with AND", async () => {
+    const r = (await listAgentCatalog({ author: "Lawson", tag: "刑事" })).map((i) => i.slug);
     expect(r).toContain("yaoqian-crypto-liability");
     expect(r).not.toContain("web3-illegal-employment"); // Lawson, but no 刑事 tag
   });
 
-  it("catalogMatches is case-insensitive and covers org + tags", () => {
-    const item = toCatalogItem(listReaderCatalog()[0]);
+  it("catalogMatches is case-insensitive and covers org + tags", async () => {
+    const item = toCatalogItem((await listReaderCatalog())[0]);
     expect(catalogMatches(item, item.author.toUpperCase())).toBe(true);
     expect(catalogMatches(item, "definitely-not-present")).toBe(false);
   });
 });
 
 describe("authors list (GET /api/v1/authors)", () => {
-  it("derives authors grouped by name, with org, count, tag-union and article pointers", () => {
+  it("derives authors grouped by name, with org, count, tag-union and article pointers", async () => {
     // Lawson Riskman is the stable seed author (2 always-published articles).
-    const lawson = listAuthors().find((a) => a.name === "Lawson Riskman");
+    const lawson = (await listAuthors()).find((a) => a.name === "Lawson Riskman");
     expect(lawson).toBeTruthy();
     expect(lawson!.org).toBe("Web3风险官");
     expect(lawson!.articleCount).toBe(2);
@@ -116,8 +116,8 @@ describe("authors list (GET /api/v1/authors)", () => {
     expect(lawson!.articles[0].title.length).toBeGreaterThan(0);
   });
 
-  it("never exposes article bodies or on-chain author addresses", () => {
-    for (const a of listAuthors()) {
+  it("never exposes article bodies or on-chain author addresses", async () => {
+    for (const a of await listAuthors()) {
       expect(a as Record<string, unknown>).not.toHaveProperty("content");
       expect(a as Record<string, unknown>).not.toHaveProperty("address");
       for (const art of a.articles) {
@@ -126,8 +126,8 @@ describe("authors list (GET /api/v1/authors)", () => {
     }
   });
 
-  it("article counts across authors sum to the full published catalog", () => {
-    const fromAuthors = listAuthors().reduce((n, a) => n + a.articleCount, 0);
-    expect(fromAuthors).toBe(listAgentCatalog().length);
+  it("article counts across authors sum to the full published catalog", async () => {
+    const fromAuthors = (await listAuthors()).reduce((n, a) => n + a.articleCount, 0);
+    expect(fromAuthors).toBe((await listAgentCatalog()).length);
   });
 });

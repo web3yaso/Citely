@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   // First-write-wins: reject if this slug is already claimed (prevents authorship/payout
   // hijack by re-attesting + replacing). Fail fast before any network call.
-  if (hasSlug(body.slug))
+  if (await hasSlug(body.slug))
     return NextResponse.json({ error: "slug already published" }, { status: 409 });
 
   // Re-verify the on-chain attestation independently (do not trust the client).
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     disclaimerHash: onchainDisclaimerHash,
   };
   try {
-    appendIndex(record);
+    await appendIndex(record);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 409 });
   }

@@ -2,12 +2,12 @@ import { describe, it, expect, afterEach } from "vitest";
 import { solPriceForSlug, solPayTo, SOL_NETWORK, SOL_USDC_MINT } from "./x402-solana-server";
 
 describe("solPriceForSlug", () => {
-  it("returns the index priceUSDC (atomic units) for a seeded slug", () => {
-    expect(solPriceForSlug("yaoqian-crypto-liability")).toBe("300000");
-    expect(solPriceForSlug("web3-illegal-employment")).toBe("250000");
+  it("returns the index priceUSDC (atomic units) for a seeded slug", async () => {
+    expect(await solPriceForSlug("yaoqian-crypto-liability")).toBe("300000");
+    expect(await solPriceForSlug("web3-illegal-employment")).toBe("250000");
   });
-  it("throws for an unknown slug", () => {
-    expect(() => solPriceForSlug("nope")).toThrow(/no published record/i);
+  it("throws for an unknown slug", async () => {
+    await expect(solPriceForSlug("nope")).rejects.toThrow(/no published record/i);
   });
 });
 

@@ -1,12 +1,10 @@
-import { readFileSync, writeFileSync, renameSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
 import { isAddress } from "viem";
+import { getStore } from "./store";
 
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
 const HEX32 = /^0x[0-9a-fA-F]{64}$/;
 const PRICE_MIN = 50000n; // $0.05 * 1e6
 const PRICE_MAX = 50000000n; // $50 * 1e6
-const INDEX_PATH = resolve(process.cwd(), "data/attestation-index.json");
 
 export type AttestationRecord = {
   slug: string;
@@ -33,30 +31,24 @@ export function validateAttestationInput(x: AttestationRecord): void {
   if (!HEX32.test(x.disclaimerHash)) throw new Error("invalid disclaimerHash");
 }
 
-export function readIndex(): AttestationRecord[] {
-  if (!existsSync(INDEX_PATH)) return [];
-  return JSON.parse(readFileSync(INDEX_PATH, "utf8"));
+export async function readIndex(): Promise<AttestationRecord[]> {
+  return getStore().getIndex();
 }
 
-export function hasSlug(slug: string): boolean {
-  return readIndex().some((r) => r.slug === slug);
+export async function hasSlug(slug: string): Promise<boolean> {
+  return (await readIndex()).some((r) => r.slug === slug);
 }
 
-export function findRecord(slug: string): AttestationRecord | undefined {
-  return readIndex().find((r) => r.slug === slug);
+export async function findRecord(slug: string): Promise<AttestationRecord | undefined> {
+  return (await readIndex()).find((r) => r.slug === slug);
 }
 
 /**
  * First-write-wins: a slug can only be claimed once. This prevents an attacker
  * from re-attesting an existing slug as themselves and REPLACING the record
  * (authorship/payout hijack). Re-publishing requires manually clearing the entry.
- * Writes atomically (temp file + rename) to avoid torn writes under concurrency.
+ * The store enforces first-write-wins (throws on duplicate slug).
  */
-export function appendIndex(rec: AttestationRecord): void {
-  const all = readIndex();
-  if (all.some((r) => r.slug === rec.slug)) throw new Error("slug already published");
-  all.push(rec);
-  const tmp = `${INDEX_PATH}.tmp`;
-  writeFileSync(tmp, JSON.stringify(all, null, 2) + "\n");
-  renameSync(tmp, INDEX_PATH);
+export async function appendIndex(rec: AttestationRecord): Promise<void> {
+  await getStore().addIndexRecord(rec);
 }

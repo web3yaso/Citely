@@ -3,8 +3,8 @@ import { Footer } from "@/components/home/Footer";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { listPublishedReports } from "@/lib/reports";
 
-export default function ReportsPage() {
-  const reports = listPublishedReports();
+export default async function ReportsPage() {
+  const reports = await listPublishedReports();
   return (
     <>
       <Masthead />

@@ -8,12 +8,12 @@ import { listLeaderboard, getWriterStats } from "@/lib/leaderboard";
 // the Phase-5 leaderboard live, and surfaces freshly published articles).
 export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
   // 收录文章 = every published report, newest first (incl. the /publish import
   // example once it has been published — matches the /reports catalog).
-  const readerArticles = listReaderCatalog();
-  const leaderboard = listLeaderboard();
-  const writerStats = getWriterStats();
+  const readerArticles = await listReaderCatalog();
+  const leaderboard = await listLeaderboard();
+  const writerStats = await getWriterStats();
   return (
     <>
       <Masthead />

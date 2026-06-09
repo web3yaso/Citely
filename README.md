@@ -1,97 +1,156 @@
+<a id="citely"></a>
+
+<p align="center">
+  <img src="docs/assets/brand/citely-logo.png" alt="Citely logo" width="180" />
+</p>
+
 # Citely
 
-> 给专家的链上付费阅读 —— **一篇报告,真人和 AI 同价付费,款项直达作者,平台 0 抽成。**
+> 专家把 Web3 法律、合规、安全与风险报告签名上链；真人读者和 AI Agent 用 x402 按篇付费解锁全文，收入 100% 直达作者钱包。
 
-律师、审计师、税务师、合规官把 Web3 风险报告**签名上链**,读者(真人或 AI Agent)用 USDC **按篇付费**解锁全文。谁是作者、内容有没有被改、定价多少、付了多少 —— 全部写在 **Base** 上,任何人可验证。**没有平台抽成、没有 API key、没有对账纠纷。**
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev/)
+[![x402](https://img.shields.io/badge/x402-pay--per--read-3B82F6)](https://x402.org/)
+[![Base Sepolia](https://img.shields.io/badge/Base-Sepolia-0052FF)](https://docs.base.org/)
+[![EAS](https://img.shields.io/badge/EAS-attestations-6B7280)](https://attest.org/)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 
-> Hackathon MVP,跑在 **Base Sepolia** 测试网。Agent 钱包用 **Cobo Agentic Wallet**。完整规格见 [docs/HACKATHON.md](docs/HACKATHON.md)。
+**中文** | [English](README.en.md)
 
-## 一句话理解
+## 目录
 
+- [项目概览](#项目概览)
+- [问题](#问题)
+- [为什么需要 AI](#为什么需要-ai)
+- [为什么需要 Web3](#为什么需要-web3)
+- [主流程](#主流程)
+- [演示](#演示)
+- [路线图](#路线图)
+- [验证材料](#验证材料)
+- [风险边界](#风险边界)
+- [团队](#团队)
+- [许可](#许可)
+
+## 项目概览
+
+Citely 是一个面向专业 Web3 合规内容的链上内容授权与付费阅读平台。律师、合规顾问、安全研究员、审计师、税务师或行业分析师可以把风险报告发布为可验证内容；真人读者和 AI Agent 按同一价格通过 x402 付费解锁全文。
+
+本次提交是 Citely 平台的 **hackathon MVP**，目标只冻结一条必须跑通的主流程：
+
+```text
+输入文章 URL -> 生成可读报告与 Citely Reader 上下文 -> 作者签名上链 -> 真人/Agent 付费读取 -> 返回可验证结果
 ```
-作者签名上链  →  报告进目录  →  真人 & AI Agent 同价付 USDC(x402)  →  款项直达作者钱包(0 抽成)
+
+当前 MVP 运行在 Base Sepolia 测试网，使用 EAS 做作者/内容/价格存证，使用 x402 做按篇 USDC 付费，使用 Cobo Agentic Wallet / pact 展示 Agent 支付边界。
+
+## 问题
+
+高质量 Web3 风险分析通常沉淀在公众号、Mirror、Substack、律所文章或研究员长文里，但它们很难被真人和 AI Agent 以可信、可结算、可追溯的方式复用。
+
+- **出处难验证**：读者很难确认作者、版本、价格和内容是否被篡改。
+- **Agent 难以合法付费读取**：传统订阅、API key 和平台账号不适合小额、临时、按需的 Agent 调用。
+- **作者无法从 Agent 阅读中获得对价**：AI 工具可以“读”专家内容回答用户，但作者通常没有新的结算路径。
+- **平台托管增加信任成本**：平台抽成、延迟结算和对账争议会削弱作者冷启动意愿。
+
+## 为什么需要 AI
+
+Citely 的核心不是让 AI 取代专家，而是让专家内容变成 Agent 可以安全消费的知识单元。
+
+- AI Agent 可以根据用户问题发现相关报告，而不是让用户自己翻完整内容库。
+- Agent 付费后由 Citely Reader 拿到全文和结构化阅读上下文，用术语表、法条地图、误区表辅助生成有边界的回答。
+- Agent 输出必须带作者和链上存证引用，避免无来源的法律/合规判断。
+- 本次 MVP 中，**Citely Reader 的付费读取与回答生成是真实主流程**；Citely Reader 上下文为预烘材料，实时 LLM 生成阅读上下文属于下一步。
+
+## 为什么需要 Web3
+
+Web3 不是装饰层，而是 Citely 的可信结算和可验证来源层。
+
+- **EAS attestation**：把作者、内容哈希、价格、版本和免责声明写成可复查记录。
+- **x402 pay-per-read**：真人和 Agent 走同一个 HTTP 402 付费路径，价格一致，无需 API key。
+- **动态 payTo**：每篇报告的收款地址指向对应作者钱包，平台不托管内容侧资金。
+- **Cobo pact / Agentic Wallet**：Agent 付款必须受授权边界约束，例如金额、收款方、链和资产。
+
+## 主流程
+
+```mermaid
+flowchart LR
+  A["输入原文 URL"] --> B["AI / 导入层: 生成报告与 Citely Reader 上下文"]
+  B --> C["作者签名生成 EAS 存证"]
+  C --> D["目录展示预览与链上证明"]
+  D --> E["真人读者用 x402 付费"]
+  D --> F["AI Agent 用 x402 付费"]
+  E --> G["全文解锁"]
+  F --> H["Agent 生成带引用的回答"]
+  G --> I["可验证结果: EAS UID + 付款记录"]
+  H --> I
 ```
 
-把一篇文章签名写进一条 **EAS 存证**(作者 + 内容哈希 + 价格)→ 自动进站点目录、带可验证徽章 → 真人点 Unlock、Agent 走 `402 → 付款 → 200`,**同一个价格** → USDC 实时结算进作者钱包,首页 EARNED 榜单立刻上涨。
+### MVP 范围冻结
 
-## 完整生命周期(五步,每步链上可验证)
-
-| # | 谁 | 做什么 |
-|---|---|---|
-| 1 | **作者** | 在 `/publish` 导入文章、自己定价,钱包签名把 `contentHash + author + price` 写成一条 **EAS 存证**(返回 attestation UID + tx hash)。 |
-| 2 | **目录** | 存证一上链,报告自动进 `/reports` 和首页「收录文章」,每张卡片带 `on-chain ✓ EAS` 徽章,可跳浏览器验证。 |
-| 3 | **真人读者** | 报告页先看 ~24% 预览 + paywall;点 Unlock,钱包发一笔 USDC(**x402 on Base**),全文展开,**付一次永久可读**。 |
-| 4 | **AI Agent** | 读 [`/SKILL.md`](public/SKILL.md):先 `GET /api/v1/articles` 发现目录,再对某篇走 `402 → 付款 → 200` 拿全文 + companion。**和真人完全同价,无需 API key。** |
-| 5 | **作者** | 两笔付费直达钱包后,刷新首页 For Writers 的 Top Earning Authors,该作者 EARNED **即刻上涨**,每笔都能在 basescan 对到链上交易。 |
-
-> **Companion**:每篇文章配 Agent Mode 包 —— 公开的 Explainer + 读者起手 prompt;付费区附术语表 / 法条地图 / 误区表。
-
-## 为什么要上链
-
-- **出处可证** —— 服务端重算 `keccak256(正文)` 比对,attester 必须等于作者地址;文章被篡改或冒名直接拒绝入库。
-- **真人 / Agent 同价** —— 价格由作者写在链上,真人 x402 和 Agent 读到的是同一个数字,无歧视定价、无隐藏加价。
-- **0 抽成直付** —— 每笔通过 x402 实时结算到作者钱包,平台不碰钱、不做中间账户,链上可查、无需信任对账。
-
-## 给 Agent 的 API
-
-| 端点 | 价格 | 说明 |
-|---|---|---|
-| `GET /api/v1/articles` | 免费 | 列目录(元数据 + `price` + `read` 路径);支持 `?q=` `?tag=` `?author=` 过滤 |
-| `GET /api/v1/articles/{slug}` | 作者定价 | `402 → 付款 → 200`,返回全文 markdown + companion + 链上 citation |
-
-闭环:**列目录 → 拿某项的 `read` 路径 → GET 它付费读全文**。接入说明见 [`public/SKILL.md`](public/SKILL.md);付款用 **Cobo Agentic Wallet**(原生 x402,Base Sepolia 链 `TBASE_SETH`)。
-
-## 演示:基于 Cobo 的阅读 Agent
-
-演示里有一个独立的「阅读 Agent」——它替用户发现、付费、读完 Citely 的文章再作答。四层各司其职:
-
-| 组件 | 职责 |
+| 优先级 | 本次包含 |
 |---|---|
-| **Vercel AI SDK** | **Agent 编排** —— 理解用户问题、决定调哪个端点、把全文组织成带出处的回答 |
-| **x402** | **付费阅读协议** —— 命中 `402 Payment Required` 时按协议付费并重试,拿到 `200` 全文 |
-| **Cobo Agentic Wallet** | **钱包执行与权限强制** —— 实际持有 USDC、签名并提交 x402 付款;所有链上动作都在策略内执行 |
-| **Cobo pact** | **用户授权边界** —— 用户一次性批准的策略(花多少、付给谁、在哪条链);Agent 只能在此边界内花钱,越界即被拒 |
+| **必做** | 单篇报告生命周期；`/publish`；EAS 存证；`/reports`；x402 付费文章接口；Agent reader 主流程；至少一条可复查验证链路。 |
+| **应做** | 真人钱包解锁；Citely Reader 回答；作者收益可见；`README` 与 3-5 分钟演示。 |
+| **加分** | 更多报告；完善 `/how-it-works`；作者榜单打磨；付费后文章包下载。 |
+| **暂缓** | 生产 DB/KV 持久化；完整作者后台；主网结算；实时 LLM 生成 Citely Reader 上下文；所有来源的全自动 URL 导入。 |
 
-**串起来的一次问答:**
+## 演示
 
-```
-用户提问
-  → [Vercel AI SDK] Agent 决定读哪篇:GET /api/v1/articles?q=… 发现目录
-  → 取该项的 read 路径:GET /api/v1/articles/{slug} → 命中 402
-  → [x402] 把 Payment-Required 交给钱包
-  → [Cobo Agentic Wallet] 在 [pact] 授权边界内签名并付 USDC(Base Sepolia)
-  → 重试拿到 200 全文 + companion
-  → [Vercel AI SDK] Agent 带作者 + 链上存证出处作答
-```
+Demo 只展示一条主流程：**输入文章 URL -> AI / agent 处理 -> 作者签名上链 -> 真人和 Agent 付费读取 -> 返回可验证结果**。
 
-## 技术栈
+### 视频演示
 
-Next.js 16 (App Router) · React 19 · TypeScript · viem/wagmi ·
-[x402](https://x402.org)(`@x402/*` + Coinbase CDP facilitator)· [EAS](https://attest.org) · Vitest。
-文章正文 **AES-256-GCM 加密**存储(`.enc`),仅付费后服务端解密。
+![Citely demo preview](docs/assets/demo/citely-demo-preview.gif)
 
-## 本地开发
+**完整 Demo 视频**：[YouTube](https://www.youtube.com/watch?v=C0cxGBRsE68)
 
-```bash
-pnpm install
-cp .env.local.example .env.local      # 填 CDP 凭证 / CONTENT_ENC_KEY / DEMO_AUTHOR_PRIVATE_KEY
-                                       # 详见 .env.local.example 注释
+### 主流程说明
 
-pnpm register-schema                   # 一次性:注册 EAS schema,把 UID 回填 .env.local
-pnpm seed yaoqian-crypto-liability web3-illegal-employment   # seed 文章上链 + 入目录
+| 步骤 | 发生什么 | 状态 |
+|---|---|---|
+| 1. 作者输入 | 作者在 For Writers 输入原文 URL，进入 `/publish`。 | 演示中可见 |
+| 2. AI / Agent 处理 | 系统把文章整理为站内报告和 Citely Reader 可用的结构化上下文。 | Citely Reader 上下文为预烘材料 |
+| 3. Web3 来源存证 | 作者钱包签名，生成 EAS attestation，报告进入目录并显示链上徽章。 | Base Sepolia 测试网 |
+| 4. 真人付费 | 真人读者用 MetaMask 通过 x402 支付测试 USDC，解锁全文。 | 演示中可见 |
+| 5. Agent 付费 | Citely Reader 调用付费 API，经历 `402 -> pay -> 200`，拿到全文和结构化上下文，并输出带引用的回答。 | 演示中可见 |
+| 6. 可验证结果 | 可复查 EAS UID、测试网交易/付款日志、API 响应或 demo 视频。 | Explorer 链接待最终确认 |
 
-pnpm dev                               # http://localhost:3000
-pnpm test                              # 全量单测(Vitest)
-```
+## 路线图
 
-付费解锁需要:读者钱包在 **Base Sepolia** 上持有测试 USDC(faucet 见 [docs.base.org/.../network-faucets](https://docs.base.org/base-chain/network-information/network-faucets),Coinbase CDP faucet 发 USDC),且**不能是文章作者本人地址**(自付会被拒)。
-
-## 常用脚本
-
-| 命令 | 作用 |
+| 阶段 | 方向 |
 |---|---|
-| `pnpm dev` / `build` / `start` / `test` | 开发 / 构建 / 生产启动 / 测试 |
-| `pnpm register-schema` | 注册 EAS schema(一次性) |
-| `pnpm seed <slug…>` | 把文章上链并写入目录 |
-| `pnpm reset-demo` | 重置到干净的演示开场(清 payment-log + 撤下导入示例) |
-| `pnpm tsx scripts/encrypt-content.ts <slug>` | 把明文文章加密成 `.mdx` + `.enc` |
+| 当前 MVP | 跑通单篇专业内容的完整闭环：导入、签名存证、x402 付费、真人 / Agent 解锁与可验证结果。 |
+| 下一阶段 | 建立作者白名单与内容审核机制，优先引入高质量合规、风控、安全与研究类内容。 |
+| 平台化阶段 | 完善多作者内容库、生产级数据存储、跨设备购买记录、作者收益看板与 Agent 发现入口。 |
+| 长期方向 | 扩展为面向 AI Agent 的可信专业知识层，让来源、授权、付款和引用都可以被验证。 |
+
+## 验证材料
+
+| 证据 | 当前状态 | 说明 |
+|---|---|---|
+| EAS attestation UID | 已有本地索引记录 | `yaoqian-crypto-liability`: `0xe084046a63beff82e07a768907c8802ce9dc3954c74334e6d3046446fb10cfec`; `web3-illegal-employment`: `0x16669c5a17d62f52529971e24151e8d91220318f9ecc29ff087b2f57f449f7f6`。最终提交前需确认 explorer 链接。 |
+| EAS 交易哈希 | 已有本地索引记录 | `0xd90b24a6c264c9359dc8ebd1d1ee48a6d8f5003b635ca465492147d149e03b42`; `0x20fc5d67096155adfe1b44ef2f88928991f63a212182925a109ee02becc4b322`。 |
+| x402 付费 API | 已实现 | `GET /api/v1/articles/{slug}`：首次 402，付款后 200 返回全文 + Citely Reader 上下文 + citation。 |
+| Agent 发现入口 | 已实现 | `public/SKILL.md`、`public/llms.txt`、`public/openapi.json`。 |
+| 本地付款日志 | 已有 demo 记录 | `data/payment-log.json` 记录 demo 付款事件；生产环境需迁移到 DB/KV。 |
+| 测试与构建 | 可复查 | `pnpm test` / `pnpm build` 可作为最终提交前验证命令；最终结果待补。 |
+
+## 风险边界
+
+- **测试网边界**：当前跑在 Base Sepolia，不代表主网资金流已经上线。
+- **Mock 边界**：Citely Reader 上下文为预烘内容；实时 LLM 生成、作者审核工作流和通用 URL 抓取仍未完成。
+- **持久化边界**：当前 demo 用 JSON 文件记录 attestation index 和 payment log；Vercel serverless 上不适合持久写入。
+- **权限边界**：Agent 支付必须受钱包策略限制，不能给主网私钥、无限授权或不受限支付能力。
+- **内容边界**：Citely 提供风险教育、来源验证和付费访问基础设施，不提供法律意见。
+- **隐私与安全**：公开 repo 不应提交 `.env.local`、私钥、助记词、CDP secret、真实资金账户信息或未加密的付费正文。
+
+## 团队
+
+| 成员 | 角色 | GitHub |
+|---|---|---|
+| Sophie | 前 Web3 钱包产品经理，负责产品设计与全栈开发 | [@web3yaso](https://github.com/web3yaso) |
+| Alex Fan | 跨境合规架构师，负责合规策略与项目叙事 | [@alexfanzong](https://github.com/alexfanzong) |
+
+## 许可
+
+本项目采用 [Apache License 2.0](LICENSE) 开源。

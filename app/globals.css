@@ -2019,12 +2019,16 @@ main.howto { max-width: 880px; margin: 0 auto; padding: 56px 28px 0; }
    ============================================================ */
 .brand .mark,
 .article .hm-brand .mark,
-.article .ag-brand .mark {
+.article .ag-brand .mark,
+.foot-mark {
   background: url(/citely-mark.png) center / contain no-repeat;
   border-radius: 0;
 }
 .brand .mark::before, .brand .mark::after,
 .article .hm-brand .mark::before, .article .hm-brand .mark::after,
-.article .ag-brand .mark::before, .article .ag-brand .mark::after {
+.article .ag-brand .mark::before, .article .ag-brand .mark::after,
+.foot-mark::before, .foot-mark::after {
   display: none;
 }
+/* Footer mark: show the real logo, slightly less muted than the old placeholder. */
+.foot-mark { opacity: 0.65; }

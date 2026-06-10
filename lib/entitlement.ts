@@ -9,6 +9,13 @@
 
 import { recoverMessageAddress } from "viem";
 import { readPaymentLog } from "./payment-log";
+import { parseEntitlementMessage } from "./entitlement-message";
+
+// Re-export the client-safe message helpers so existing server/test imports of
+// `buildEntitlementMessage` / `parseEntitlementMessage` from "./entitlement" keep
+// working. The client (UnlockGate) imports them from "./entitlement-message"
+// directly to avoid pulling this module's payment-log/node:fs chain into the bundle.
+export { buildEntitlementMessage, parseEntitlementMessage } from "./entitlement-message";
 
 export type EntitlementFailureReason = "bad_signature" | "slug_mismatch" | "expired" | "not_paid";
 
@@ -18,37 +25,6 @@ export type EntitlementResult =
 
 const MAX_AGE_MS = 5 * 60 * 1000;
 const FUTURE_SKEW_MS = 60 * 1000;
-
-const SLUG_PREFIX = "文章: ";
-const TIME_PREFIX = "时间: ";
-
-/** The exact text the wallet signs. issuedAt is epoch ms; stored as ISO. */
-export function buildEntitlementMessage(
-  slug: string,
-  address: string,
-  issuedAt: number,
-  nonce: string,
-): string {
-  return [
-    "Citely 阅读验证",
-    `${SLUG_PREFIX}${slug}`,
-    `地址: ${address}`,
-    `${TIME_PREFIX}${new Date(issuedAt).toISOString()}`,
-    `nonce: ${nonce}`,
-  ].join("\n");
-}
-
-/** Read back slug + issuedAt (ms) from a signed message; null if malformed. */
-export function parseEntitlementMessage(message: string): { slug: string; issuedAt: number } | null {
-  const lines = message.split("\n");
-  const slugLine = lines.find((l) => l.startsWith(SLUG_PREFIX));
-  const timeLine = lines.find((l) => l.startsWith(TIME_PREFIX));
-  if (!slugLine || !timeLine) return null;
-  const slug = slugLine.slice(SLUG_PREFIX.length).trim();
-  const issuedAt = Date.parse(timeLine.slice(TIME_PREFIX.length).trim());
-  if (!slug || Number.isNaN(issuedAt)) return null;
-  return { slug, issuedAt };
-}
 
 /** True if `address` appears as the payer for `slug` in the payment log. */
 export async function hasPaidFor(slug: string, address: string): Promise<boolean> {

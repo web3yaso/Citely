@@ -5,7 +5,7 @@ import { injected } from "wagmi/connectors";
 import { createWalletClient, custom, type EIP1193Provider } from "viem";
 import { baseSepolia } from "viem/chains";
 import { unlockArticle, type ArticlePaid } from "@/lib/x402-client";
-import { buildEntitlementMessage } from "@/lib/entitlement";
+import { buildEntitlementMessage } from "@/lib/entitlement-message";
 
 export function UnlockGate({
   slug,

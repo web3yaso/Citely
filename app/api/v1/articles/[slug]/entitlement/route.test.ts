@@ -8,9 +8,10 @@ vi.mock("@/lib/payment-log", () => ({
   appendPaymentLog: async () => true,
 }));
 
-import { POST } from "./route";
+import { POST, OPTIONS } from "./route";
 import { buildEntitlementMessage } from "@/lib/entitlement";
 
+// Hardhat/Anvil deterministic account — public test key, never holds real funds.
 const account = privateKeyToAccount(
   "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
 );
@@ -51,5 +52,16 @@ describe("POST /api/v1/articles/[slug]/entitlement", () => {
   it("returns 400 when body fields are missing", async () => {
     const res = await POST(postReq({}), { params });
     expect(res.status).toBe(400);
+  });
+
+  it("returns 404 for an unknown slug (before any auth work)", async () => {
+    const res = await POST(postReq({ message: "x", signature: "0xabc" }), {
+      params: Promise.resolve({ slug: "does-not-exist-ever" }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it("OPTIONS preflight returns 204", () => {
+    expect(OPTIONS().status).toBe(204);
   });
 });

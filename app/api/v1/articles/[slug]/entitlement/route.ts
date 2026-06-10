@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findRecord } from "@/lib/attestation-index";
 import { getPaidArticleBody } from "@/lib/paid-article";
-import { verifyEntitlement } from "@/lib/entitlement";
+import { verifyEntitlement, type EntitlementFailureReason } from "@/lib/entitlement";
 
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
 const CORS = {
@@ -9,7 +9,8 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "*",
 };
-const REASON_CN: Record<string, string> = {
+// Exhaustive: a renamed/added reason in entitlement.ts becomes a compile error here.
+const REASON_CN: Record<EntitlementFailureReason, string> = {
   bad_signature: "签名验证失败,请重试",
   slug_mismatch: "验证信息不匹配",
   expired: "验证已过期,请重新验证",

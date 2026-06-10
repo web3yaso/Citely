@@ -10,9 +10,11 @@
 import { recoverMessageAddress } from "viem";
 import { readPaymentLog } from "./payment-log";
 
+export type EntitlementFailureReason = "bad_signature" | "slug_mismatch" | "expired" | "not_paid";
+
 export type EntitlementResult =
   | { ok: true; address: string }
-  | { ok: false; reason: "bad_signature" | "slug_mismatch" | "expired" | "not_paid" };
+  | { ok: false; reason: EntitlementFailureReason };
 
 const MAX_AGE_MS = 5 * 60 * 1000;
 const FUTURE_SKEW_MS = 60 * 1000;

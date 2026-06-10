@@ -91,6 +91,36 @@
         }
       }
     },
+    "/api/v1/articles/{slug}/entitlement": {
+      "post": {
+        "summary": "Re-unlock a previously paid article by signing a wallet message (no payment).",
+        "description": "Free. A returning reader who already paid proves ownership with a wallet signature; the server recovers the address, checks the payment log, and returns the same full article JSON as the paid 200. Human-reading lane.",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message", "signature"],
+                "properties": {
+                  "message": { "type": "string", "description": "Output of buildEntitlementMessage: lines 文章/地址/时间(ISO)/nonce." },
+                  "signature": { "type": "string", "description": "personal_sign of message by the paying wallet." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Full article JSON (slug, title, content, companion, starterPrompts, citation)." },
+          "400": { "description": "Missing/invalid body." },
+          "403": { "description": "bad_signature / slug_mismatch / expired / not_paid." },
+          "404": { "description": "Unknown or unpublished slug." }
+        }
+      }
+    },
     "/api/v1/sol/articles/{slug}": {
       "get": {
         "operationId": "readArticleSolana",

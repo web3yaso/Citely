@@ -29,8 +29,20 @@ export function UnlockGate({
   const [status, setStatus] = useState<"idle" | "paying" | "verifying" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
 
+  // Prompt a wallet connection when disconnected. Returns true if already connected
+  // (safe to proceed); callers bail when it returns false. Centralizes the guard
+  // shared by the pay and verify flows.
+  function ensureConnected(): boolean {
+    if (!isConnected || !address || !connector?.getProvider) {
+      connect({ connector: injected({ target: "metaMask" }) });
+      return false;
+    }
+    return true;
+  }
+
   // Build a wallet client on-demand from the live connector provider (avoids the
-  // reactive useWalletClient() hook lagging after cookie reconnect).
+  // reactive useWalletClient() hook lagging after cookie reconnect). Must be called
+  // synchronously after ensureConnected() passes.
   async function getWalletClient() {
     const provider = (await connector!.getProvider()) as EIP1193Provider;
     return createWalletClient({ account: address!, chain: baseSepolia, transport: custom(provider) });
@@ -38,10 +50,7 @@ export function UnlockGate({
 
   async function onUnlock() {
     setErr(null);
-    if (!isConnected || !address || !connector?.getProvider) {
-      connect({ connector: injected({ target: "metaMask" }) });
-      return;
-    }
+    if (!ensureConnected()) return;
     setStatus("paying");
     try {
       const data = await unlockArticle(await getWalletClient(), slug);
@@ -49,7 +58,7 @@ export function UnlockGate({
       setStatus("idle");
       onUnlocked?.(data);
     } catch (e) {
-      setErr((e as Error).message ?? "unlock failed");
+      setErr((e as Error).message ?? "解锁失败");
       setStatus("error");
     }
   }
@@ -57,15 +66,12 @@ export function UnlockGate({
   // Returning paid reader: prove ownership by signing, server checks the payment log.
   async function onVerify() {
     setErr(null);
-    if (!isConnected || !address || !connector?.getProvider) {
-      connect({ connector: injected({ target: "metaMask" }) });
-      return;
-    }
+    if (!ensureConnected()) return;
     setStatus("verifying");
     try {
       const walletClient = await getWalletClient();
-      const message = buildEntitlementMessage(slug, address, Date.now(), crypto.randomUUID());
-      const signature = await walletClient.signMessage({ account: address, message });
+      const message = buildEntitlementMessage(slug, address!, Date.now(), crypto.randomUUID());
+      const signature = await walletClient.signMessage({ account: address!, message });
       const res = await fetch(`/api/v1/articles/${slug}/entitlement`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -78,7 +84,7 @@ export function UnlockGate({
       setFull((await res.json()) as ArticlePaid); // in-memory only; no download on re-read
       setStatus("idle");
     } catch (e) {
-      setErr((e as Error).message ?? "verify failed");
+      setErr((e as Error).message ?? "验证失败");
       setStatus("error");
     }
   }
@@ -96,12 +102,7 @@ export function UnlockGate({
             ? `连接钱包付 ${priceUsd} 解锁全文`
             : `用钱包付 ${priceUsd} 解锁全文`}
         </button>
-        <button
-          className="pw-verify"
-          onClick={onVerify}
-          disabled={busy}
-          style={{ marginLeft: 12, background: "none", border: "none", color: "var(--ink-mute)", cursor: "pointer", textDecoration: "underline" }}
-        >
+        <button className="pw-verify" onClick={onVerify} disabled={busy}>
           {status === "verifying" ? "验证中…" : "已付过费?验证解锁"}
         </button>
         {err && (

@@ -102,7 +102,7 @@ The demo focuses on one main flow: **input report URL -> AI / agent processing -
 
 ![Citely demo preview](docs/assets/demo/citely-demo-preview.gif)
 
-**Full demo video**: [YouTube](https://www.youtube.com/watch?v=C0cxGBRsE68)
+**Full demo video**: [YouTube](https://youtu.be/wpCCItBu6sc)
 
 ### Main Flow
 

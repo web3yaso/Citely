@@ -1,12 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAccount, useConnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { createWalletClient, custom, type EIP1193Provider } from "viem";
 import { baseSepolia } from "viem/chains";
 import { unlockArticle, type ArticlePaid } from "@/lib/x402-client";
-
-const cacheKey = (slug: string) => `citely_unlocked_${slug}`;
+import { buildEntitlementMessage } from "@/lib/entitlement-message";
 
 export function UnlockGate({
   slug,
@@ -21,66 +20,90 @@ export function UnlockGate({
   preview: React.ReactNode;
   renderFull: (full: ArticlePaid) => React.ReactNode;
   ctaClassName?: string;
-  /** Fired once on payment success only — NOT on cache-restore. Human path passes the auto-download here. */
+  /** Fired once on PAYMENT success only — NOT on verify-unlock. Human path passes the auto-download here. */
   onUnlocked?: (full: ArticlePaid) => void;
 }) {
   const { isConnected, address, connector } = useAccount();
   const { connect } = useConnect();
   const [full, setFull] = useState<ArticlePaid | null>(null);
-  const [status, setStatus] = useState<"idle" | "paying" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "paying" | "verifying" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    const cached = localStorage.getItem(cacheKey(slug));
-    if (cached) {
-      try {
-        setFull(JSON.parse(cached));
-      } catch {}
+  // Prompt a wallet connection when disconnected. Returns true if already connected
+  // (safe to proceed); callers bail when it returns false. Centralizes the guard
+  // shared by the pay and verify flows.
+  function ensureConnected(): boolean {
+    if (!isConnected || !address || !connector?.getProvider) {
+      connect({ connector: injected({ target: "metaMask" }) });
+      return false;
     }
-  }, [slug]);
+    return true;
+  }
+
+  // Build a wallet client on-demand from the live connector provider (avoids the
+  // reactive useWalletClient() hook lagging after cookie reconnect). Must be called
+  // synchronously after ensureConnected() passes.
+  async function getWalletClient() {
+    const provider = (await connector!.getProvider()) as EIP1193Provider;
+    return createWalletClient({ account: address!, chain: baseSepolia, transport: custom(provider) });
+  }
 
   async function onUnlock() {
     setErr(null);
-    if (!isConnected || !address || !connector?.getProvider) {
-      connect({ connector: injected({ target: "metaMask" }) });
-      return;
-    }
+    if (!ensureConnected()) return;
     setStatus("paying");
     try {
-      // Build the wallet client on-demand from the live connector provider —
-      // avoids the reactive useWalletClient() hook lagging after cookie reconnect.
-      const provider = (await connector.getProvider()) as EIP1193Provider;
-      const walletClient = createWalletClient({
-        account: address,
-        chain: baseSepolia,
-        transport: custom(provider),
-      });
-      const data = await unlockArticle(walletClient, slug);
-      localStorage.setItem(cacheKey(slug), JSON.stringify(data));
-      setFull(data);
+      const data = await unlockArticle(await getWalletClient(), slug);
+      setFull(data); // in-memory only — never persisted to localStorage (#12)
       setStatus("idle");
       onUnlocked?.(data);
     } catch (e) {
-      setErr((e as Error).message ?? "unlock failed");
+      setErr((e as Error).message ?? "解锁失败");
+      setStatus("error");
+    }
+  }
+
+  // Returning paid reader: prove ownership by signing, server checks the payment log.
+  async function onVerify() {
+    setErr(null);
+    if (!ensureConnected()) return;
+    setStatus("verifying");
+    try {
+      const walletClient = await getWalletClient();
+      const message = buildEntitlementMessage(slug, address!, Date.now(), crypto.randomUUID());
+      const signature = await walletClient.signMessage({ account: address!, message });
+      const res = await fetch(`/api/v1/articles/${slug}/entitlement`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message, signature }),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? `验证失败 (${res.status})`);
+      }
+      setFull((await res.json()) as ArticlePaid); // in-memory only; no download on re-read
+      setStatus("idle");
+    } catch (e) {
+      setErr((e as Error).message ?? "验证失败");
       setStatus("error");
     }
   }
 
   if (full) return <>{renderFull(full)}</>;
+  const busy = status === "paying" || status === "verifying";
   return (
     <>
       {preview}
       <div style={{ marginTop: 14 }}>
-        <button
-          className={ctaClassName ?? "pw-cta"}
-          onClick={onUnlock}
-          disabled={status === "paying"}
-        >
+        <button className={ctaClassName ?? "pw-cta"} onClick={onUnlock} disabled={busy}>
           {status === "paying"
             ? "付款中…"
             : !isConnected
             ? `连接钱包付 ${priceUsd} 解锁全文`
             : `用钱包付 ${priceUsd} 解锁全文`}
+        </button>
+        <button className="pw-verify" onClick={onVerify} disabled={busy}>
+          {status === "verifying" ? "验证中…" : "已付过费?验证解锁"}
         </button>
         {err && (
           <p className="pw-fine" style={{ color: "var(--crimson)" }}>

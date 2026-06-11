@@ -35,6 +35,12 @@ Citely 是 Next.js 16（App Router）应用，部署到 Vercel。全程跑在 **
 - **付费解锁照常工作**:`appendPaymentLog` 已改为 best-effort(`lib/payment-log.ts`)——
   写入失败只打日志、不影响已结算的付费返回全文。代价:**Vercel 上排行榜 EARNED 不会增长**
   (重启即丢)。
+
+  > **Entitlement (#12):** re-reading a paid article verifies the signer against the
+  > **payment log**, so durable payment-log persistence (KV/Redis in prod) is required
+  > for re-unlock to work across requests. `appendPaymentLog` is best-effort — if a
+  > settlement's log write fails, that reader still got the content on first payment but
+  > won't be able to re-unlock until they pay again.
 - **`/publish` 发布在 Vercel 上不会持久化**:`appendIndex` 写入会失败,新文章刷新后消失。
   目录里已 commit 的 seed 文章(`data/attestation-index.json`)正常可读、可付费。
 

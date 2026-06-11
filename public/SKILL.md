@@ -45,6 +45,21 @@ article's `read` path to pay and read it.
    }
    ```
 
+## Re-unlock without paying again (human reader lane)
+
+**POST** `https://citely-nine.vercel.app/api/v1/articles/<slug>/entitlement` — free. If
+you already paid for an article, prove it by signing a short wallet message instead of
+paying again. Build the message with `buildEntitlementMessage` (lines: `Citely 阅读验证` /
+`文章: <slug>` / `地址: <address>` / `时间: <ISO>` / `nonce: <uuid>`), sign it with
+`personal_sign`, and POST `{ message, signature }`. The server recovers the signer,
+checks the payment log, and returns the same full article JSON as the paid 200
+(`slug, title, content, companion, starterPrompts, citation`). Errors: 400
+(missing/invalid body), 403 (`bad_signature` / `slug_mismatch` / `expired` /
+`not_paid`), 404 (unknown/unpublished slug).
+
+> This is for the **human web reader** (replaces a browser-side localStorage cache).
+> Agents normally just re-pay or keep the JSON they already fetched.
+
 ## Wallet requirements (or you stay at 402)
 
 - Be funded with **test USDC on Base Sepolia** (faucets: https://docs.base.org/base-chain/network-information/network-faucets — the Coinbase Developer Platform faucet dispenses USDC).

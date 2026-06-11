@@ -1777,6 +1777,15 @@ main {
 .article .pw-cta svg { width: 16px; height: 16px; }
 .article .pw-fine { font-size: 12px; color: var(--ink-3); text-align: center; margin: 14px 0 0; line-height: 1.6; }
 .article .pw-fine strong { color: var(--crimson); }
+/* Secondary "already paid? verify-unlock" link beside the pay CTA (#12).
+   Unscoped (not under .article) so it also styles the agent-view gate. */
+.pw-verify {
+  margin-left: 12px; background: none; border: none; padding: 0;
+  font-family: var(--sans); font-size: 13px; color: var(--ink-mute);
+  text-decoration: underline; cursor: pointer;
+}
+.pw-verify:hover { color: var(--crimson); }
+.pw-verify:disabled { opacity: .5; cursor: default; }
 
 /* ============================================================
    /how-it-works — three-party payment loop.

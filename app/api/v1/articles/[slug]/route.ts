@@ -9,6 +9,7 @@ import {
 import { getPaidArticleBody } from "@/lib/paid-article";
 import { findRecord } from "@/lib/attestation-index";
 import { appendPaymentLog } from "@/lib/payment-log";
+import { payerFromXPayment } from "@/lib/x402-payer";
 import type { HTTPRequestContext } from "@x402/core/server";
 
 const SLUG_RE = /^[a-z0-9-]{1,80}$/;
@@ -25,7 +26,7 @@ const handler = async (req: NextRequest): Promise<NextResponse> => {
   if (rec) {
     await appendPaymentLog({
       slug,
-      payer: req.headers.get("x-payer") ?? rec.author,
+      payer: payerFromXPayment(req) ?? rec.author,
       amount: rec.priceUSDC,
       txHash: rec.attestationUID,
       ts: Date.now(),
